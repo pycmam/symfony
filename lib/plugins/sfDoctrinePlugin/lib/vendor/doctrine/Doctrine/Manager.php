@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: Manager.php 5801 2009-06-02 17:30:27Z piccoloprincipe $
+ *  $Id: Manager.php 5893 2009-06-16 15:25:42Z jwage $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -29,7 +29,7 @@
  * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
  * @link        www.phpdoctrine.org
  * @since       1.0
- * @version     $Revision: 5801 $
+ * @version     $Revision: 5893 $
  * @author      Konsta Vesterinen <kvesteri@cc.hut.fi>
  */
 class Doctrine_Manager extends Doctrine_Configurable implements Countable, IteratorAggregate
@@ -219,7 +219,7 @@ class Doctrine_Manager extends Doctrine_Configurable implements Countable, Itera
         // Decode adapter information
         if (is_array($adapter)) {
             foreach ($adapter as $key => $value) {
-                $adapter[$key]  = $value?urldecode($value):null;
+                $adapter[$key]  = $value ? urldecode($value):null;
             }
         }
 
@@ -297,7 +297,14 @@ class Doctrine_Manager extends Doctrine_Configurable implements Countable, Itera
                 $e2 = explode('=', $string);
 
                 if (isset($e2[0]) && isset($e2[1])) {
-                    list($key, $value) = $e2;
+                    if (count($e2) > 2)
+                    {
+                        $key = $e2[0];
+                        unset($e2[0]);
+                        $value = implode('=', $e2);
+                    } else {
+                        list($key, $value) = $e2;
+                    }
                     $parts[$key] = $value;
                 }
             }
