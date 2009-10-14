@@ -18,7 +18,7 @@
  * @subpackage exception
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
  * @author     Sean Kerr <sean@code-box.org>
- * @version    SVN: $Id: sfException.class.php 20802 2009-08-05 09:35:44Z fabien $
+ * @version    SVN: $Id: sfException.class.php 22873 2009-10-08 14:46:02Z fabien $
  */
 class sfException extends Exception
 {
@@ -178,6 +178,11 @@ class sfException extends Exception
       $responseTable = self::formatArrayAsHtml(sfDebug::responseAsArray($context->getResponse()));
       $userTable     = self::formatArrayAsHtml(sfDebug::userAsArray($context->getUser()));
       $globalsTable  = self::formatArrayAsHtml(sfDebug::globalsAsArray());
+    }
+
+    if ($response)
+    {
+      $response->sendHttpHeaders();
     }
 
     if ($template = self::getTemplatePathForError($format, true))

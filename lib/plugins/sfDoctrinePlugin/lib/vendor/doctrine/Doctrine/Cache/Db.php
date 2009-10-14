@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: Db.php 6148 2009-07-21 20:45:03Z jwage $
+ *  $Id: Db.php 6353 2009-09-14 18:58:37Z jwage $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -27,7 +27,7 @@
  * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
  * @link        www.phpdoctrine.org
  * @since       1.0
- * @version     $Revision: 6148 $
+ * @version     $Revision: 6353 $
  * @author      Konsta Vesterinen <kvesteri@cc.hut.fi>
  */
 class Doctrine_Cache_Db extends Doctrine_Cache_Driver implements Countable
@@ -97,7 +97,7 @@ class Doctrine_Cache_Db extends Doctrine_Cache_Driver implements Countable
             return null;
         }
 
-        if (bin2hex($hex) == $hex) {
+        if ( ! ctype_xdigit($hex)) {
             return $hex;
         }
 
