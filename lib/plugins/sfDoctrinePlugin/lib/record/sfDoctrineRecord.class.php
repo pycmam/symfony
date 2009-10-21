@@ -37,7 +37,10 @@ abstract class sfDoctrineRecord extends Doctrine_Record
 
     if ($this->getTable()->hasRelation('Translation'))
     {
-      $this->unshiftFilter(new sfDoctrineRecordI18nFilter());
+      $filters = $this->getTable()->getFilters();
+      if (!$filters || !current($filters) instanceof sfDoctrineRecordI18nFilter) {
+        $this->unshiftFilter(new sfDoctrineRecordI18nFilter());
+      }
     }
   }
 
