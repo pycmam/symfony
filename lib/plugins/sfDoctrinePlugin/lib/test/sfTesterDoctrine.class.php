@@ -41,7 +41,7 @@ class sfTesterDoctrine extends sfTester
    *
    * @return sfTestFunctionalBase|sfTester
    */
-  public function check($model, $query, $value = true)
+  public function check($model, $query, $value = true, &$objects = null)
   {
     if (null === $query)
     {
