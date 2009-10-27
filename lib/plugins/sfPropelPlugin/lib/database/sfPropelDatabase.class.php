@@ -23,7 +23,7 @@
  * @package    symfony
  * @subpackage propel
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfPropelDatabase.class.php 14517 2009-01-06 21:35:25Z FabianLange $
+ * @version    SVN: $Id: sfPropelDatabase.class.php 21908 2009-09-11 12:06:21Z fabien $
  */
 class sfPropelDatabase extends sfPDODatabase
 {
@@ -189,7 +189,7 @@ class sfPropelDatabase extends sfPDODatabase
    */
   public function shutdown()
   {
-    if (!is_null($this->connection))
+    if (null !== $this->connection)
     {
       @$this->connection = null;
     }

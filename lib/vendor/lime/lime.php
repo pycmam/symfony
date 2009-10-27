@@ -13,7 +13,7 @@
  *
  * @package    lime
  * @author     Fabien Potencier <fabien.potencier@gmail.com>
- * @version    SVN: $Id: lime.php 19870 2009-07-04 12:26:25Z fabien $
+ * @version    SVN: $Id: lime.php 23217 2009-10-20 20:58:51Z FabianLange $
  */
 class lime_test
 {
@@ -598,11 +598,26 @@ class lime_colorizer
 {
   static public $styles = array();
 
-  protected $force_colors = false;
+  protected $colors_supported = false;
 
   public function __construct($force_colors = false)
   {
-    $this->force_colors = $force_colors;
+    if ($force_colors)
+    {
+      $this->colors_supported = true;
+    }
+    else
+    {
+      // colors are supported on windows with ansicon or on tty consoles
+      if (DIRECTORY_SEPARATOR == '\\')
+      {
+        $this->colors_supported = false !== getenv('ANSICON');
+      }
+      else
+      {
+        $this->colors_supported = function_exists('posix_isatty') && @posix_isatty(STDOUT);
+      }
+    }
   }
 
   public static function style($name, $options = array())
@@ -612,8 +627,8 @@ class lime_colorizer
 
   public function colorize($text = '', $parameters = array())
   {
-    // disable colors if not supported (windows or non tty console)
-    if (!$this->force_colors && (DIRECTORY_SEPARATOR == '\\' || !function_exists('posix_isatty') || !@posix_isatty(STDOUT)))
+
+    if (!$this->colors_supported)
     {
       return $text;
     }

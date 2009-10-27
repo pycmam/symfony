@@ -14,7 +14,7 @@
  * @package    symfony
  * @subpackage propel
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfPropel.class.php 14025 2008-12-14 15:41:43Z Kris.Wallsmith $
+ * @version    SVN: $Id: sfPropel.class.php 23306 2009-10-24 13:59:13Z Kris.Wallsmith $
  */
 class sfPropel
 {
@@ -50,7 +50,7 @@ class sfPropel
 
     $dispatcher->connect('user.change_culture', array('sfPropel', 'listenToChangeCultureEvent'));
 
-    if (!is_null($culture))
+    if (null !== $culture)
     {
       self::setDefaultCulture($culture);
     }
@@ -99,14 +99,22 @@ class sfPropel
   }
 
   /**
+   * Backward compatible.
+   */
+  static public function import($path)
+  {
+    return self::importClass($path);
+  }
+
+  /**
    * Include once a file specified in DOT notation and return unqualified classname.
    *
    * This method is the same as in Propel::import().
    * The only difference is that this one takes the autoloading into account.
    *
-   * @see Propel::import()
+   * @see Propel::importClass()
    */
-  public static function import($path)
+  public static function importClass($path)
   {
     // extract classname
     if (($pos = strrpos($path, '.')) === false)
@@ -143,10 +151,10 @@ class sfPropel
    */
   static public function clearAllInstancePools()
   {
-    $files = sfFinder::type('file')->name('*MapBuilder.php')->in(sfProjectConfiguration::getActive()->getModelDirs());
+    $files = sfFinder::type('file')->name('*TableMap.php')->in(sfProjectConfiguration::getActive()->getModelDirs());
     foreach ($files as $file)
     {
-      $omClass = basename($file, 'MapBuilder.php');
+      $omClass = basename($file, 'TableMap.php');
       if (class_exists($omClass) && is_subclass_of($omClass, 'BaseObject'))
       {
         $peer = constant($omClass.'::PEER');

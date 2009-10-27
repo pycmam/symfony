@@ -8,28 +8,23 @@
  * file that was distributed with this source code.
  */
 
+
+
 /**
  * sfWebDebugPanelPropel adds a panel to the web debug toolbar with Propel information.
  *
  * @package    symfony
  * @subpackage debug
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfWebDebugPanelPropel.class.php 17296 2009-04-14 15:27:30Z fabien $
+ * @version    SVN: $Id: sfWebDebugPanelPropel.class.php 23334 2009-10-25 21:54:05Z FabianLange $
  */
 class sfWebDebugPanelPropel extends sfWebDebugPanel
 {
   /**
-   * Constructor.
+   * Get the title/icon for the panel
    *
-   * @param sfWebDebug $webDebug The web debut toolbar instance
+   * @return string $html
    */
-  public function __construct(sfWebDebug $webDebug)
-  {
-    parent::__construct($webDebug);
-
-    $this->webDebug->getEventDispatcher()->connect('debug.web.filter_logs', array($this, 'filterLogs'));
-  }
-
   public function getTitle()
   {
     if ($sqlLogs = $this->getSqlLogs())
@@ -38,50 +33,49 @@ class sfWebDebugPanelPropel extends sfWebDebugPanel
     }
   }
 
+  /**
+   * Get the verbal title of the panel
+   *
+   * @return string $title
+   */
   public function getPanelTitle()
   {
     return 'SQL queries';
   }
 
+  /**
+   * Get the html content of the panel
+   *
+   * @return string $html
+   */
   public function getPanelContent()
   {
-    $logs = array();
-    foreach ($this->getSqlLogs() as $log)
-    {
-      $logs[] = htmlspecialchars($log, ENT_QUOTES, sfConfig::get('sf_charset'));
-    }
-
     return '
       <div id="sfWebDebugDatabaseLogs">
-      <ol><li>'.implode("</li>\n<li>", $logs).'</li></ol>
+        <p>Propel Version: '.Propel::VERSION.'</p>
+        <ol>'.implode("\n", $this->getSqlLogs()).'</ol>
       </div>
     ';
   }
 
-  public function filterLogs(sfEvent $event, $logs)
-  {
-    $newLogs = array();
-    foreach ($logs as $log)
-    {
-      if ('sfPropelLogger' != $log['type'])
-      {
-        $newLogs[] = $log;
-      }
-    }
-
-    return $newLogs;
-  }
-
+  /**
+   * Listens to debug.web.load_panels and adds this panel.
+   */
   static public function listenToAddPanelEvent(sfEvent $event)
   {
     $event->getSubject()->setPanel('db', new self($event->getSubject()));
   }
 
+  /**
+   * Builds the sql logs and returns them as an array.
+   *
+   * @return array
+   */
   protected function getSqlLogs()
   {
-    $logs = array();
-    $bindings = array();
-    $i = 0;
+    $threshold = $this->getSlowQueryThreshold();
+
+    $html = array();
     foreach ($this->webDebug->getLogger()->getLogs() as $log)
     {
       if ('sfPropelLogger' != $log['type'])
@@ -89,29 +83,53 @@ class sfWebDebugPanelPropel extends sfWebDebugPanel
         continue;
       }
 
-      if (preg_match('/^(?:prepare|exec|query): (.*)$/s', $log['message'], $match))
-      {
-        $logs[$i++] = $match[1];
-        $bindings[$i - 1] = array();
-      }
-      else if (preg_match('/Binding (.*) at position (.+?) w\//', $log['message'], $match))
-      {
-        $bindings[$i - 1][$match[2]] = $match[1];
-      }
-    }
+      // parse log message for details
+      $details = array();
+      $class = '';
 
-    foreach ($logs as $i => $log)
-    {
-      if (count($bindings[$i]))
+      $parts = explode(' | ', $log['message']);
+      foreach ($parts as $i => $part)
       {
-        $bindings[$i] = array_reverse($bindings[$i]);
-        foreach ($bindings[$i] as $search => $replace)
+        if (preg_match('/^(\w+):\s+(.*)/', $part, $match))
         {
-          $logs[$i] = str_replace($search, $replace, $logs[$i]);
+          $details[] = $part;
+          unset($parts[$i]);
+
+          // check for slow query
+          if ('time' == $match[1] && (float) $match[2] > $threshold)
+          {
+            $class = 'sfWebDebugWarning';
+            if ($this->getStatus() > sfLogger::NOTICE)
+            {
+              $this->setStatus(sfLogger::NOTICE);
+            }
+          }
         }
       }
+      $query = join(' | ', $parts);
+
+      $html[] = sprintf('
+        <li class="%s">
+          <p class="sfWebDebugDatabaseQuery">%s</p>
+          <div class="sfWebDebugDatabaseLogInfo">%s%s</div>
+        </li>',
+        $class,
+        $this->formatSql(htmlspecialchars($query, ENT_QUOTES, sfConfig::get('sf_charset'))),
+        implode(', ', $details),
+        count($log['debug_backtrace']) ? '&nbsp;'.$this->getToggleableDebugStack($log['debug_backtrace']) : ''
+      );
     }
 
-    return $logs;
+    return $html;
+  }
+
+  /**
+   * Returns the slow query threshold.
+   * 
+   * @return integer|null
+   */
+  protected function getSlowQueryThreshold()
+  {
+    return Propel::getConfiguration(PropelConfiguration::TYPE_OBJECT)->getParameter('debugpdo.logging.details.slow.threshold');
   }
 }

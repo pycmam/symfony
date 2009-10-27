@@ -16,7 +16,7 @@
  * @package    symfony
  * @subpackage response
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfWebResponse.class.php 17749 2009-04-29 11:54:22Z fabien $
+ * @version    SVN: $Id: sfWebResponse.class.php 21908 2009-09-11 12:06:21Z fabien $
  */
 class sfWebResponse extends sfResponse
 {
@@ -235,7 +235,7 @@ class sfWebResponse extends sfResponse
   {
     $name = $this->normalizeHeaderName($name);
 
-    if (is_null($value))
+    if (null === $value)
     {
       unset($this->headers[$name]);
 
@@ -504,7 +504,7 @@ class sfWebResponse extends sfResponse
     // set HTTP header
     $this->setHttpHeader($key, $value, $replace);
 
-    if (is_null($value))
+    if (null === $value)
     {
       unset($this->httpMetas[$key]);
 
@@ -546,7 +546,7 @@ class sfWebResponse extends sfResponse
   {
     $key = strtolower($key);
 
-    if (is_null($value))
+    if (null === $value)
     {
       unset($this->metas[$key]);
 

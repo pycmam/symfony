@@ -102,22 +102,23 @@ class Doctrine_Template_Listener_Sluggable extends Doctrine_Record_Listener
     protected function buildSlugFromFields($record)
     {
         if (empty($this->_options['fields'])) {
-            if (method_exists($record, 'getUniqueSlug')) {
+            if (is_callable($this->_options['provider'])) {
+            	$value = call_user_func($this->_options['provider'], $record);
+            } else if (method_exists($record, 'getUniqueSlug')) {
                 $value = $record->getUniqueSlug($record);
             } else {
                 $value = (string) $record;
             }
         } else {
             $value = '';
-
             foreach ($this->_options['fields'] as $field) {
                 $value .= $record->$field . ' ';
             }
-
-            if ($this->_options['unique'] === true) {   
-                return $this->getUniqueSlug($record, $value);
-            }
         }
+
+    	if ($this->_options['unique'] === true) {
+    		return $this->getUniqueSlug($record, $value);
+    	}
 
         return call_user_func_array($this->_options['builder'], array($value, $record));
     }
@@ -140,7 +141,6 @@ class Doctrine_Template_Listener_Sluggable extends Doctrine_Record_Listener
         return call_user_func_array($this->_options['builder'], array($value, $record));
     }
 
-
     /**
      * Creates a unique slug for a given Doctrine_Record. This function enforces the uniqueness by 
      * incrementing the values with a postfix if the slug is not unique
@@ -152,7 +152,7 @@ class Doctrine_Template_Listener_Sluggable extends Doctrine_Record_Listener
     public function getUniqueSlug($record, $slugFromFields) 
     {
         $name = $record->getTable()->getFieldName($this->_options['name']);
-		$proposal =  call_user_func_array($this->_options['builder'], array($slugFromFields, $record));
+        $proposal =  call_user_func_array($this->_options['builder'], array($slugFromFields, $record));
         $slug = $proposal;
 
         $whereString = 'r.' . $name . ' LIKE ?';
@@ -181,14 +181,23 @@ class Doctrine_Template_Listener_Sluggable extends Doctrine_Record_Listener
         ->select('r.'.$name)
         ->from(get_class($record).' r')
         ->where($whereString , $whereParams)
-        ->setHydrationMode(Doctrine::HYDRATE_ARRAY);
+        ->setHydrationMode(Doctrine_Core::HYDRATE_ARRAY);
 
         // We need to introspect SoftDelete to check if we are not disabling unique records too
         if ($record->getTable()->hasTemplate('Doctrine_Template_SoftDelete')) {
 	        $softDelete = $record->getTable()->getTemplate('Doctrine_Template_SoftDelete');
 	
 	        // we have to consider both situations here
-            $query->addWhere('(r.' . $softDelete->getOption('name') . ' = true OR r.' . $softDelete->getOption('name') . ' IS NOT NULL OR r.' . $softDelete->getOption('name') . ' = false OR r.' . $softDelete->getOption('name') . ' IS NULL)');
+            if ($softDelete->getOption('type') == 'boolean') {
+                $conn = $query->getConnection();
+
+                $query->addWhere(
+                    '(r.' . $softDelete->getOption('name') . ' = ' . $conn->convertBooleans(true) .
+                    ' OR r.' . $softDelete->getOption('name') . ' = ' . $conn->convertBooleans(false) . ')'
+                );
+            } else {
+                $query->addWhere('(r.' . $softDelete->getOption('name') . ' IS NOT NULL OR r.' . $softDelete->getOption('name') . ' IS NULL)');
+            }
         }
 
         $similarSlugResult = $query->execute();

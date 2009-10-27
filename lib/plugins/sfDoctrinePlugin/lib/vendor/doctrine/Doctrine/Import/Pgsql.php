@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: Pgsql.php 5801 2009-06-02 17:30:27Z piccoloprincipe $
+ *  $Id: Pgsql.php 6494 2009-10-13 03:39:37Z jwage $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -26,7 +26,7 @@
  * @author      Konsta Vesterinen <kvesteri@cc.hut.fi>
  * @author      Paul Cooper <pgc@ucecom.com>
  * @author      Lukas Smith <smith@pooteeweet.org> (PEAR MDB2 library)
- * @version     $Revision: 5801 $
+ * @version     $Revision: 6494 $
  * @link        www.phpdoctrine.org
  * @since       1.0
  */
@@ -183,8 +183,8 @@ class Doctrine_Import_Pgsql extends Doctrine_Import
                 'type'      => $decl['type'][0],
                 'alltypes'  => $decl['type'],
                 'length'    => $decl['length'],
-                'fixed'     => $decl['fixed'],
-                'unsigned'  => $decl['unsigned'],
+                'fixed'     => (bool) $decl['fixed'],
+                'unsigned'  => (bool) $decl['unsigned'],
                 'notnull'   => ($val['isnotnull'] == true),
                 'default'   => $val['default'],
                 'primary'   => ($val['pri'] == 't'),
@@ -193,11 +193,18 @@ class Doctrine_Import_Pgsql extends Doctrine_Import
             $matches = array(); 
 
             if (preg_match("/^nextval\('(.*)'(::.*)?\)$/", $description['default'], $matches)) { 
-     
                 $description['sequence'] = $this->conn->formatter->fixSequenceName($matches[1]); 
                 $description['default'] = null; 
-            } 
-            
+            } else if (preg_match("/^'(.*)'::character varying$/", $description['default'], $matches)) {
+                $description['default'] = $matches[1];
+            } else if ($description['type'] == 'boolean') {
+                if ($description['default'] === 'true') {
+                   $description['default'] = true;
+                } else if ($description['default'] === 'false') {
+                   $description['default'] = false;
+                }
+            }
+
             $columns[$val['field']] = $description;
         }
         

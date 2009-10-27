@@ -14,7 +14,7 @@
  * @package    symfony
  * @subpackage validator
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfValidatorI18nChoiceLanguage.class.php 11700 2008-09-21 10:53:44Z fabien $
+ * @version    SVN: $Id: sfValidatorI18nChoiceLanguage.class.php 22268 2009-09-23 06:24:28Z fabien $
  */
 class sfValidatorI18nChoiceLanguage extends sfValidatorChoice
 {
@@ -51,8 +51,6 @@ class sfValidatorI18nChoiceLanguage extends sfValidatorChoice
 
       $languages = $options['languages'];
     }
-
-    sort($languages);
 
     $this->setOption('choices', $languages);
   }

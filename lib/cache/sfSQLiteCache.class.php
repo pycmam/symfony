@@ -14,7 +14,7 @@
  * @package    symfony
  * @subpackage cache
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfSQLiteCache.class.php 9084 2008-05-20 01:29:54Z Carl.Vondrick $
+ * @version    SVN: $Id: sfSQLiteCache.class.php 21908 2009-09-11 12:06:21Z fabien $
  */
 class sfSQLiteCache extends sfCache
 {
@@ -65,7 +65,7 @@ class sfSQLiteCache extends sfCache
   {
     $data = $this->dbh->singleQuery(sprintf("SELECT data FROM cache WHERE key = '%s' AND timeout > %d", sqlite_escape_string($key), time()));
 
-    return is_null($data) ? $default : $data;
+    return null === $data ? $default : $data;
   }
 
   /**

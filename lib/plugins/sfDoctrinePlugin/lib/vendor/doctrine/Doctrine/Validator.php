@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: Validator.php 6399 2009-09-24 14:54:22Z guilhermeblanco $
+ *  $Id: Validator.php 6568 2009-10-24 00:54:58Z jwage $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -27,7 +27,7 @@
  * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
  * @link        www.phpdoctrine.org
  * @since       1.0
- * @version     $Revision: 6399 $
+ * @version     $Revision: 6568 $
  * @author      Roman Borschel <roman@code-factory.org>
  * @author      Konsta Vesterinen <kvesteri@cc.hut.fi>
  */
@@ -76,6 +76,7 @@ class Doctrine_Validator extends Doctrine_Locator_Injectable
         foreach ($fields as $fieldName => $value) {
             $table->validateField($fieldName, $value, $record);
         }
+        $table->validateUniques($record);
     }
 
     /**
@@ -167,6 +168,7 @@ class Doctrine_Validator extends Doctrine_Locator_Injectable
              case 'string':
                  return is_string($var) || is_numeric($var);
              case 'blob':
+                 return is_string($var) || is_resource($var);
              case 'clob':
              case 'gzip':
                  return is_string($var);
@@ -188,7 +190,7 @@ class Doctrine_Validator extends Doctrine_Locator_Injectable
              case 'enum':
                  return is_string($var) || is_int($var);
              default:
-                 return false;
+                 return true;
          }
      }
 }
