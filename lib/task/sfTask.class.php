@@ -14,7 +14,7 @@
  * @package    symfony
  * @subpackage task
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfTask.class.php 23075 2009-10-15 06:35:34Z fabien $
+ * @version    SVN: $Id: sfTask.class.php 23437 2009-10-29 16:12:53Z fabien $
  */
 abstract class sfTask
 {
@@ -545,7 +545,7 @@ abstract class sfTask
         $this->logBlock($error->getMessage(), 'ERROR');
       }
 
-      $value = $this->ask($question, null, $options['style']);
+      $value = $this->ask($question, $options['style'], null);
 
       try
       {

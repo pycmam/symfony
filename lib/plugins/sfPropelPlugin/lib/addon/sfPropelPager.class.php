@@ -15,7 +15,7 @@
  * @package    sfPropelPlugin
  * @subpackage addon
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfPropelPager.class.php 21925 2009-09-11 15:14:45Z fabien $
+ * @version    SVN: $Id: sfPropelPager.class.php 23401 2009-10-27 22:57:10Z FabianLange $
  */
 class sfPropelPager extends sfPager
 {
@@ -96,6 +96,12 @@ class sfPropelPager extends sfPager
    */
   protected function retrieveObject($offset)
   {
+    // if all results are known we can use the stored objects
+    if (null !== $this->objects)
+    {
+      return $this->objects[$offset-1];
+    }
+
     $criteriaForRetrieve = clone $this->getCriteria();
     $criteriaForRetrieve
       ->setOffset($offset - 1)
@@ -112,7 +118,11 @@ class sfPropelPager extends sfPager
    */
   public function getResults()
   {
-    return call_user_func(array($this->getClassPeer(), $this->getPeerMethod()), $this->getCriteria());
+    if (null === $this->objects)
+    {
+      $this->objects = call_user_func(array($this->getClassPeer(), $this->getPeerMethod()), $this->getCriteria());
+    }
+    return $this->objects;
   }
 
   /**
