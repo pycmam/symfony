@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: Collection.php 6484 2009-10-12 17:40:41Z jwage $
+ *  $Id: Collection.php 6589 2009-10-30 17:03:29Z jwage $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -28,7 +28,7 @@
  * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
  * @link        www.phpdoctrine.org
  * @since       1.0
- * @version     $Revision: 6484 $
+ * @version     $Revision: 6589 $
  * @author      Konsta Vesterinen <kvesteri@cc.hut.fi>
  */
 class Doctrine_Collection extends Doctrine_Access implements Countable, IteratorAggregate, Serializable
@@ -539,6 +539,9 @@ class Doctrine_Collection extends Doctrine_Access implements Countable, Iterator
             }
             $query->from($this->_table->getComponentName());
             $query->where($this->_table->getComponentName() . '.id IN (' . substr(str_repeat("?, ", count($list)),0,-2) . ')');
+            if ( ! $list) {
+                $query->where($this->_table->getComponentName() . '.id IN (' . substr(str_repeat("?, ", count($list)),0,-2) . ')', $list);
+            }
 
             return $query;
         }
@@ -556,6 +559,10 @@ class Doctrine_Collection extends Doctrine_Access implements Countable, Iterator
                     $list[] = $value;
                 }
             }
+        }
+
+        if ( ! $list) {
+            return;
         }
 
         $dql     = $rel->getRelationDql(count($list), 'collection');

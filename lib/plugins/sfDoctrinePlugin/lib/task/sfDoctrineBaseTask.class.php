@@ -16,7 +16,7 @@
  * @subpackage doctrine
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
  * @author     Jonathan H. Wage <jonwage@gmail.com>
- * @version    SVN: $Id: sfDoctrineBaseTask.class.php 23317 2009-10-25 11:45:28Z Kris.Wallsmith $
+ * @version    SVN: $Id: sfDoctrineBaseTask.class.php 23518 2009-11-02 13:39:34Z Kris.Wallsmith $
  */
 abstract class sfDoctrineBaseTask extends sfBaseTask
 {
@@ -110,6 +110,10 @@ abstract class sfDoctrineBaseTask extends sfBaseTask
           if (!isset($models[$model]['package']))
           {
             $models[$model]['package'] = $plugin->getName().'.lib.model.doctrine';
+          }
+
+          if (!isset($models[$model]['package_custom_path']) && 0 === strpos($models[$model]['package'], $plugin->getName()))
+          {
             $models[$model]['package_custom_path'] = $plugin->getRootDir().'/lib/model/doctrine';
           }
         }

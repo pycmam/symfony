@@ -1,7 +1,7 @@
 <?php
 
 /*
- *  $Id: PHP5PeerBuilder.php 1262 2009-10-26 20:54:39Z francois $
+ *  $Id: PHP5PeerBuilder.php 1265 2009-10-29 20:26:39Z francois $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -1128,6 +1128,13 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 		\$criteria->remove(".$this->getColumnConstant($col).");
 ";
 				}
+			} elseif ($col->isPrimaryKey() && $col->isAutoIncrement() && $table->getIdMethod() != "none" && $table->isAllowPkInsert() && !$this->getPlatform()->supportsInsertNullPk()) {
+				  $script .= "
+		// remove pkey col if it is null since this table does not accept that
+		if (\$criteria->containsKey(".$this->getColumnConstant($col).") && !\$criteria->keyContainsValue(" . $this->getColumnConstant($col) . ") ) {
+			\$criteria->remove(".$this->getColumnConstant($col).");
+		}
+";
 			}
 		}
 		$script .= "

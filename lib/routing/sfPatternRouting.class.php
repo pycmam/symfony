@@ -16,7 +16,7 @@
  * @package    symfony
  * @subpackage routing
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfPatternRouting.class.php 23180 2009-10-19 07:19:52Z FabianLange $
+ * @version    SVN: $Id: sfPatternRouting.class.php 23430 2009-10-29 13:55:10Z FabianLange $
  */
 class sfPatternRouting extends sfRouting
 {
@@ -76,7 +76,7 @@ class sfPatternRouting extends sfRouting
    */
   public function loadConfiguration()
   {
-    if ($this->options['load_configuration'] && $config = sfContext::getInstance()->getConfigCache()->checkConfig('config/routing.yml', true))
+    if ($this->options['load_configuration'] && $config = $this->getConfigFilename())
     {
       foreach (include($config) as $name => $route)
       {
@@ -85,6 +85,11 @@ class sfPatternRouting extends sfRouting
     }
 
     parent::loadConfiguration();
+  }
+
+  protected function getConfigFileName()
+  {
+    return sfContext::getInstance()->getConfigCache()->checkConfig('config/routing.yml', true);
   }
 
   /**

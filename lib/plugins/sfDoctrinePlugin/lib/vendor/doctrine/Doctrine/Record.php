@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: Record.php 6560 2009-10-23 17:29:33Z jwage $
+ *  $Id: Record.php 6592 2009-10-30 17:35:31Z jwage $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -29,7 +29,7 @@
  * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
  * @link        www.phpdoctrine.org
  * @since       1.0
- * @version     $Revision: 6560 $
+ * @version     $Revision: 6592 $
  */
 abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Countable, IteratorAggregate, Serializable
 {
@@ -1005,11 +1005,17 @@ abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Count
     {
         if (is_null($name)) {
             foreach ($this->_table->getRelations() as $rel) {
-                $this->_references[$rel->getAlias()] = $rel->fetchRelatedFor($this);
+                $reference = $rel->fetchRelatedFor($this);
+                if ($reference instanceof Doctrine_Collection || ($reference && $reference->exists())) {
+                    $this->_references[$rel->getAlias()] = $reference;
+                }
             }
         } else {
             $rel = $this->_table->getRelation($name);
-            $this->_references[$name] = $rel->fetchRelatedFor($this);
+            $reference = $rel->fetchRelatedFor($this);
+            if ($reference instanceof Doctrine_Collection || ($reference && $reference->exists())) {
+                $this->_references[$name] = $reference;
+            }
         }
     }
 
@@ -1514,7 +1520,7 @@ abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Count
                 $localFieldName = $this->_table->getFieldName($rel->getLocal());
 
                 if ($value !== self::$_null) {
-                    $relatedTable = $value->getTable();
+                    $relatedTable = $rel->getTable();
                     $foreignFieldName = $relatedTable->getFieldName($rel->getForeign());
                 }
 

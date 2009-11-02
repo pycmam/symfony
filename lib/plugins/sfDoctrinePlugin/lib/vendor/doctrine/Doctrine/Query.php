@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: Query.php 6532 2009-10-16 23:12:59Z jwage $
+ *  $Id: Query.php 6581 2009-10-29 21:24:47Z jwage $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -30,7 +30,7 @@
  * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
  * @link        www.phpdoctrine.org
  * @since       1.0
- * @version     $Revision: 6532 $
+ * @version     $Revision: 6581 $
  * @author      Konsta Vesterinen <kvesteri@cc.hut.fi>
  * @todo        Proposal: This class does far too much. It should have only 1 task: Collecting
  *              the DQL query parts and the query parameters (the query state and caching options/methods
@@ -455,11 +455,11 @@ class Doctrine_Query extends Doctrine_Query_Abstract implements Countable
         if (in_array('*', $fields)) {
             $fields = $table->getFieldNames();
         } else {
+            $driverClassName = $this->_hydrator->getHydratorDriverClassName();
             // only auto-add the primary key fields if this query object is not
-            // a subquery of another query object and we're not using HYDRATE_NONE
-            if ( ! $this->_isSubquery && $this->_hydrator->getHydrationMode() != Doctrine_Core::HYDRATE_NONE
-                    && $this->_hydrator->getHydrationMode() != Doctrine_Core::HYDRATE_SCALAR
-                    && $this->_hydrator->getHydrationMode() != Doctrine_Core::HYDRATE_SINGLE_SCALAR) {
+            // a subquery of another query object or we're using a child of the Object Graph
+            // hydrator
+            if ( ! $this->_isSubquery && is_subclass_of($driverClassName, 'Doctrine_Hydrator_Graph')) {
                 $fields = array_unique(array_merge((array) $table->getIdentifier(), $fields));
             }
         }
