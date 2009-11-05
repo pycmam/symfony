@@ -188,16 +188,12 @@ class sfDoctrinePager extends sfPager implements Serializable
    */
   public function getResults($hydrationMode = null)
   {
-    if (Doctrine_Core::HYDRATE_ARRAY === $hydrationMode)
-    {
       // If we hydrate an array, we can store it fo later reuse
       if (null === $this->objects)
       {
         $this->objects = $this->getQuery()->execute(array(), $hydrationMode);
       }
       return $this->objects;
-    }
-    return $this->getQuery()->execute(array(), $hydrationMode);
   }
 
   /**
