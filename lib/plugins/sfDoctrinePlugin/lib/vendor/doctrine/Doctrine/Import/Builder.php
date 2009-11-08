@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: Builder.php 6508 2009-10-14 06:28:49Z jwage $
+ *  $Id: Builder.php 6670 2009-11-04 19:52:45Z jwage $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -30,7 +30,7 @@
  * @link        www.phpdoctrine.org
  * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
  * @since       1.0
- * @version     $Revision: 6508 $
+ * @version     $Revision: 6670 $
  * @author      Konsta Vesterinen <kvesteri@cc.hut.fi>
  * @author      Jukka Hassinen <Jukka.Hassinen@BrainAlliance.com>
  * @author      Nicolas Bérard-Nault <nicobn@php.net>
@@ -180,7 +180,9 @@ class Doctrine_Import_Builder extends Doctrine_Builder
      */
     public function __construct()
     {
-        $this->_baseTableClassName = Doctrine_Manager::getInstance()->getAttribute(Doctrine_Core::ATTR_TABLE_CLASS);
+        if ($tableClass = Doctrine_Manager::getInstance()->getAttribute(Doctrine_Core::ATTR_TABLE_CLASS)) {
+            $this->_baseTableClassName = $tableClass;
+        }
         $this->loadTemplate();
     }
 
@@ -637,7 +639,7 @@ class Doctrine_Import_Builder extends Doctrine_Builder
         $ret[] = '@author     ' . $this->_phpDocName . ' <' . $this->_phpDocEmail . '>';
 
         $fileName = $definition['className']  . $this->_suffix;
-        $ret[] = '@version    SVN: $Id: Builder.php 6508 2009-10-14 06:28:49Z jwage $';
+        $ret[] = '@version    SVN: $Id: Builder.php 6670 2009-11-04 19:52:45Z jwage $';
 
         $ret = ' * ' . implode(PHP_EOL . ' * ', $ret);
         $ret = ' ' . trim($ret);

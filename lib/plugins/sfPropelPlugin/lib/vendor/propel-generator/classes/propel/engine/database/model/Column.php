@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: Column.php 1262 2009-10-26 20:54:39Z francois $
+ *  $Id: Column.php 1295 2009-11-07 23:22:15Z francois $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -36,7 +36,7 @@ include_once 'propel/engine/database/model/ColumnDefaultValue.php';
  * @author     Daniel Rall <dlr@finemaltcoding.com> (Torque)
  * @author     Byron Foster <byron_foster@yahoo.com> (Torque)
  * @author     Bernd Goldschmidt <bgoldschmidt@rapidsoft.de>
- * @version    $Revision: 1262 $
+ * @version    $Revision: 1295 $
  * @package    propel.engine.database.model
  */
 class Column extends XMLElement {
@@ -211,7 +211,7 @@ class Column extends XMLElement {
 
       // Add type, size information to associated Domain object
       $this->getDomain()->replaceSqlType($this->getAttribute("sqlType"));
-      $this->getDomain()->replaceSize($this->getAttribute("size"));
+      $this->getDomain()->replaceSize($this->getAttribute("size", $type == 'VARCHAR' ? 255 : null));
       $this->getDomain()->replaceScale($this->getAttribute("scale"));
 
       $defval = $this->getAttribute("defaultValue", $this->getAttribute("default"));

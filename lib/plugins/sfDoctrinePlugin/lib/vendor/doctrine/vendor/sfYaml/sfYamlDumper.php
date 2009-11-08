@@ -8,26 +8,24 @@
  * file that was distributed with this source code.
  */
 
-/* removed since it now use the doctrine autoload feature
- * require_once(dirname(__FILE__).'/Yml_Inline.class.php');
- */
+require_once(dirname(__FILE__).'/sfYamlInline.php');
 
 /**
- * YamlSfDumper class.
+ * sfYamlDumper dumps PHP variables to YAML strings.
  *
  * @package    symfony
- * @subpackage util
+ * @subpackage yaml
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: YamlSfDumper.class.php 8488 2008-04-16 22:20:29Z fabien $
+ * @version    SVN: $Id: sfYamlDumper.class.php 10575 2008-08-01 13:08:42Z nicolas $
  */
-class Doctrine_Parser_YamlSf_Dumper
+class sfYamlDumper
 {
   /**
    * Dumps a PHP value to YAML.
    *
-   * @param  mixed   The PHP value
-   * @param  integer The level where you switch to inline YAML
-   * @param  integer The level o indentation indentation (used internally)
+   * @param  mixed   $input  The PHP value
+   * @param  integer $inline The level where you switch to inline YAML
+   * @param  integer $indent The level o indentation indentation (used internally)
    *
    * @return string  The YAML representation of the PHP value
    */
@@ -38,11 +36,11 @@ class Doctrine_Parser_YamlSf_Dumper
 
     if ($inline <= 0 || !is_array($input) || empty($input))
     {
-      $output .= $prefix.Doctrine_Parser_YamlSf_Inline::dump($input);
+      $output .= $prefix.sfYamlInline::dump($input);
     }
     else
     {
-      $isAHash = count(array_diff_key($input, array_fill(0, count($input), true)));
+      $isAHash = array_keys($input) !== range(0, count($input) - 1);
 
       foreach ($input as $key => $value)
       {
@@ -50,7 +48,7 @@ class Doctrine_Parser_YamlSf_Dumper
 
         $output .= sprintf('%s%s%s%s',
           $prefix,
-          $isAHash ? Doctrine_Parser_YamlSf_Inline::dump($key).':' : '-',
+          $isAHash ? sfYamlInline::dump($key).':' : '-',
           $willBeInlined ? ' ' : "\n",
           $this->dump($value, $inline - 1, $willBeInlined ? 0 : $indent + 2)
         ).($willBeInlined ? "\n" : '');

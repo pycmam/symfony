@@ -14,7 +14,7 @@
  * @package    symfony
  * @subpackage test
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfTesterResponse.class.php 23520 2009-11-02 13:52:53Z Kris.Wallsmith $
+ * @version    SVN: $Id: sfTesterResponse.class.php 23568 2009-11-03 13:31:13Z Kris.Wallsmith $
  */
 class sfTesterResponse extends sfTester
 {
@@ -219,10 +219,17 @@ class sfTesterResponse extends sfTester
 
       if (count($errors = libxml_get_errors()))
       {
+        $lines = explode(PHP_EOL, $this->response->getContent());
+
         $this->tester->fail($message);
         foreach ($errors as $error)
         {
           $this->tester->diag('    '.trim($error->message));
+          if (preg_match('/line (\d+)/', $error->message, $match) && $error->line != $match[1])
+          {
+            $this->tester->diag('      '.str_pad($match[1].':', 6).trim($lines[$match[1] - 1]));
+          }
+          $this->tester->diag('      '.str_pad($error->line.':', 6).trim($lines[$error->line - 1]));
         }
       }
       else

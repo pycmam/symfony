@@ -8,19 +8,22 @@
  * file that was distributed with this source code.
  */
 
-/* removed since it now use the doctrine autoload feature
- * require_once(dirname(__FILE__).'/Yml_Inline.class.php');
- */
+require_once(dirname(__FILE__).'/sfYamlInline.php');
+
+if (!defined('PREG_BAD_UTF8_OFFSET_ERROR'))
+{
+  define('PREG_BAD_UTF8_OFFSET_ERROR', 5);
+}
 
 /**
- * YamlSfParser class.
+ * sfYamlParser parses YAML strings to convert them to PHP arrays.
  *
  * @package    symfony
- * @subpackage util
+ * @subpackage yaml
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: YamlSfParser.class.php 8869 2008-05-09 00:22:57Z dwhittle $
+ * @version    SVN: $Id: sfYamlParser.class.php 10832 2008-08-13 07:46:08Z fabien $
  */
-class Doctrine_Parser_YamlSf_Parser
+class sfYamlParser
 {
   protected
     $value         = '',
@@ -33,7 +36,7 @@ class Doctrine_Parser_YamlSf_Parser
   /**
    * Constructor
    *
-   * @param integer The offset of YAML document (used for line numbers in error messages)
+   * @param integer $offset The offset of YAML document (used for line numbers in error messages)
    */
   public function __construct($offset = 0)
   {
@@ -43,9 +46,11 @@ class Doctrine_Parser_YamlSf_Parser
   /**
    * Parses a YAML string to a PHP value.
    *
-   * @param  string A YAML string
+   * @param  string $value A YAML string
    *
    * @return mixed  A PHP value
+   *
+   * @throws InvalidArgumentException If the YAML is not valid
    */
   public function parse($value)
   {
@@ -65,10 +70,10 @@ class Doctrine_Parser_YamlSf_Parser
       // tab?
       if (preg_match('#^\t+#', $this->currentLine))
       {
-        throw new InvalidArgumentException(sprintf('A YAML file cannot contain tabs as indentation at line %d (%s).', $this->getRealCurrentLineNb(), $this->currentLine));
+        throw new InvalidArgumentException(sprintf('A YAML file cannot contain tabs as indentation at line %d (%s).', $this->getRealCurrentLineNb() + 1, $this->currentLine));
       }
 
-      $isRef = $isInPlace = false;
+      $isRef = $isInPlace = $isProcessed = false;
       if (preg_match('#^\-(\s+(?P<value>.+?))?\s*$#', $this->currentLine, $values))
       {
         if (isset($values['value']) && preg_match('#^&(?P<ref>[^ ]+) *(?P<value>.*)#', $values['value'], $matches))
@@ -78,10 +83,10 @@ class Doctrine_Parser_YamlSf_Parser
         }
 
         // array
-        if ( !isset($values['value']) || '' == trim($values['value'], ' ') || 0 === strpos(ltrim($values['value'], ' '), '#'))
+        if (!isset($values['value']) || '' == trim($values['value'], ' ') || 0 === strpos(ltrim($values['value'], ' '), '#'))
         {
           $c = $this->getRealCurrentLineNb() + 1;
-          $parser = new Doctrine_Parser_YamlSf_Parser($c);
+          $parser = new sfYamlParser($c);
           $parser->refs =& $this->refs;
           $data[] = $parser->parse($this->getNextEmbedBlock());
         }
@@ -89,7 +94,7 @@ class Doctrine_Parser_YamlSf_Parser
         {
           if (preg_match('/^([^ ]+)\: +({.*?)$/', $values['value'], $matches))
           {
-            $data[] = array($matches[1] => Doctrine_Parser_YamlSf_Inline::load($matches[2]));
+            $data[] = array($matches[1] => sfYamlInline::load($matches[2]));
           }
           else
           {
@@ -99,21 +104,57 @@ class Doctrine_Parser_YamlSf_Parser
       }
       else if (preg_match('#^(?P<key>[^ ].*?) *\:(\s+(?P<value>.+?))?\s*$#', $this->currentLine, $values))
       {
-        $key = Doctrine_Parser_YamlSf_Inline::parseScalar($values['key']);
+        $key = sfYamlInline::parseScalar($values['key']);
 
         if ('<<' === $key)
         {
           if (isset($values['value']) && '*' === substr($values['value'], 0, 1))
           {
             $isInPlace = substr($values['value'], 1);
-            if ( !array_key_exists($isInPlace, $this->refs))
+            if (!array_key_exists($isInPlace, $this->refs))
             {
-              throw new InvalidArgumentException(sprintf('Reference "%s" does not exist on line %s.', $isInPlace, $this->currentLine));
+              throw new InvalidArgumentException(sprintf('Reference "%s" does not exist at line %s (%s).', $isInPlace, $this->getRealCurrentLineNb() + 1, $this->currentLine));
             }
           }
           else
           {
-            throw new InvalidArgumentException(sprintf('In place substitution must point to a reference on line %s.', $this->currentLine));
+            if (isset($values['value']) && $values['value'] !== '')
+            {
+              $value = $values['value'];
+            }
+            else
+            {
+              $value = $this->getNextEmbedBlock();
+            }
+            $c = $this->getRealCurrentLineNb() + 1;
+            $parser = new sfYamlParser($c);
+            $parser->refs =& $this->refs;
+            $parsed = $parser->parse($value);
+
+            $merged = array();
+            if (!is_array($parsed))
+            {
+              throw new InvalidArgumentException(sprintf("YAML merge keys used with a scalar value instead of an array at line %s (%s)", $this->getRealCurrentLineNb() + 1, $this->currentLine));
+            }
+            else if (isset($parsed[0]))
+            {
+              // Numeric array, merge individual elements
+              foreach (array_reverse($parsed) as $parsedItem)
+              {
+                if (!is_array($parsedItem))
+                {
+                  throw new InvalidArgumentException(sprintf("Merge items must be arrays at line %s (%s).", $this->getRealCurrentLineNb() + 1, $parsedItem));
+                }
+                $merged = array_merge($parsedItem, $merged);
+              }
+            }
+            else
+            {
+              // Associative array, merge
+              $merged = array_merge($merge, $parsed);
+            }
+
+            $isProcessed = $merged;
           }
         }
         else if (isset($values['value']) && preg_match('#^&(?P<ref>[^ ]+) *(?P<value>.*)#', $values['value'], $matches))
@@ -122,8 +163,13 @@ class Doctrine_Parser_YamlSf_Parser
           $values['value'] = $matches['value'];
         }
 
+        if ($isProcessed)
+        {
+          // Merge keys
+          $data = $isProcessed;
+        }
         // hash
-        if ( !isset($values['value']) || '' == trim($values['value'], ' ') || 0 === strpos(ltrim($values['value'], ' '), '#'))
+        else if (!isset($values['value']) || '' == trim($values['value'], ' ') || 0 === strpos(ltrim($values['value'], ' '), '#'))
         {
           // if next line is less indented or equal, then it means that the current value is null
           if ($this->isNextLineIndented())
@@ -133,7 +179,7 @@ class Doctrine_Parser_YamlSf_Parser
           else
           {
             $c = $this->getRealCurrentLineNb() + 1;
-            $parser = new Doctrine_Parser_YamlSf_Parser($c);
+            $parser = new sfYamlParser($c);
             $parser->refs =& $this->refs;
             $data[$key] = $parser->parse($this->getNextEmbedBlock());
           }
@@ -155,10 +201,46 @@ class Doctrine_Parser_YamlSf_Parser
         // one liner?
         if (1 == count(explode("\n", rtrim($this->value, "\n"))))
         {
-          return Doctrine_Parser_YamlSf_Inline::load($this->lines[0]);
+          $value = sfYamlInline::load($this->lines[0]);
+          if (is_array($value))
+          {
+            $first = reset($value);
+            if ('*' === substr($first, 0, 1))
+            {
+              $data = array();
+              foreach ($value as $alias)
+              {
+                $data[] = $this->refs[substr($alias, 1)];
+              }
+              $value = $data;
+            }
+          }
+
+          return $value;
         }
 
-        throw new InvalidArgumentException(sprintf('Unable to parse line %d (%s).', $this->getRealCurrentLineNb(), $this->currentLine));
+        switch (preg_last_error())
+        {
+          case PREG_INTERNAL_ERROR:
+            $error = 'Internal PCRE error on line';
+            break;
+          case PREG_BACKTRACK_LIMIT_ERROR:
+            $error = 'pcre.backtrack_limit reached on line';
+            break;
+          case PREG_RECURSION_LIMIT_ERROR:
+            $error = 'pcre.recursion_limit reached on line';
+            break;
+          case PREG_BAD_UTF8_ERROR:
+            $error = 'Malformed UTF-8 data on line';
+            break;
+          case PREG_BAD_UTF8_OFFSET_ERROR:
+            $error = 'Offset doesn\'t correspond to the begin of a valid UTF-8 code point on line';
+            break;
+          default:
+            $error = 'Unable to parse line';
+        }
+
+        throw new InvalidArgumentException(sprintf('%s %d (%s).', $error, $this->getRealCurrentLineNb() + 1, $this->currentLine));
       }
 
       if ($isRef)
@@ -183,7 +265,7 @@ class Doctrine_Parser_YamlSf_Parser
   /**
    * Returns the current line indentation.
    *
-   * @returns integer The current line indentation
+   * @return integer The current line indentation
    */
   protected function getCurrentLineIndentation()
   {
@@ -193,7 +275,7 @@ class Doctrine_Parser_YamlSf_Parser
   /**
    * Returns the next embed block of YAML.
    *
-   * @param string A YAML string
+   * @return string A YAML string
    */
   protected function getNextEmbedBlock()
   {
@@ -201,9 +283,9 @@ class Doctrine_Parser_YamlSf_Parser
 
     $newIndent = $this->getCurrentLineIndentation();
 
-    if ( !$this->isCurrentLineEmpty() && 0 == $newIndent)
+    if (!$this->isCurrentLineEmpty() && 0 == $newIndent)
     {
-      throw new InvalidArgumentException(sprintf('Indentation problem at line %d (%s)', $this->getRealCurrentLineNb(), $this->currentLine));
+      throw new InvalidArgumentException(sprintf('Indentation problem at line %d (%s)', $this->getRealCurrentLineNb() + 1, $this->currentLine));
     }
 
     $data = array(substr($this->currentLine, $newIndent));
@@ -239,7 +321,7 @@ class Doctrine_Parser_YamlSf_Parser
       }
       else
       {
-        throw new InvalidArgumentException(sprintf('Indentation problem at line %d (%s)', $this->getRealCurrentLineNb(), $this->currentLine));
+        throw new InvalidArgumentException(sprintf('Indentation problem at line %d (%s)', $this->getRealCurrentLineNb() + 1, $this->currentLine));
       }
     }
 
@@ -272,7 +354,7 @@ class Doctrine_Parser_YamlSf_Parser
   /**
    * Parses a YAML value.
    *
-   * @param  string A YAML value
+   * @param  string $value A YAML value
    *
    * @return mixed  A PHP value
    */
@@ -289,7 +371,7 @@ class Doctrine_Parser_YamlSf_Parser
         $value = substr($value, 1);
       }
 
-      if ( !array_key_exists($value, $this->refs))
+      if (!array_key_exists($value, $this->refs))
       {
         throw new InvalidArgumentException(sprintf('Reference "%s" does not exist (%s).', $value, $this->currentLine));
       }
@@ -304,16 +386,16 @@ class Doctrine_Parser_YamlSf_Parser
     }
     else
     {
-      return Doctrine_Parser_YamlSf_Inline::load($value);
+      return sfYamlInline::load($value);
     }
   }
 
   /**
    * Parses a folded scalar.
    *
-   * @param  string  The separator that was used to begin this folded scalar (| or >)
-   * @param  string  The indicator that was used to begin this folded scalar (+ or -)
-   * @param  integer The indentation that was used to begin this folded scalar
+   * @param  string  $separator   The separator that was used to begin this folded scalar (| or >)
+   * @param  string  $indicator   The indicator that was used to begin this folded scalar (+ or -)
+   * @param  integer $indentation The indentation that was used to begin this folded scalar
    *
    * @return string  The text value
    */
@@ -331,12 +413,12 @@ class Doctrine_Parser_YamlSf_Parser
       $notEOF = $this->moveToNextLine();
     }
 
-    if ( !$notEOF)
+    if (!$notEOF)
     {
       return '';
     }
 
-    if ( !preg_match('#^(?P<indent>'.($indentation ? str_repeat(' ', $indentation) : ' +').')(?P<text>.*)$#', $this->currentLine, $matches))
+    if (!preg_match('#^(?P<indent>'.($indentation ? str_repeat(' ', $indentation) : ' +').')(?P<text>.*)$#', $this->currentLine, $matches))
     {
       $this->moveToPreviousLine();
 
@@ -452,13 +534,15 @@ class Doctrine_Parser_YamlSf_Parser
    */
   protected function isCurrentLineComment()
   {
-    return 0 === strpos(ltrim($this->currentLine, ' '), '#');
+    //checking explicitly the first char of the trim is faster than loops or strpos
+    $ltrimmedLine = ltrim($this->currentLine, ' ');
+    return $ltrimmedLine[0] === '#';
   }
 
   /**
    * Cleanups a YAML string to be parsed.
    *
-   * @param  string The input YAML string
+   * @param  string $value The input YAML string
    *
    * @return string A cleaned up YAML string
    */
@@ -466,7 +550,7 @@ class Doctrine_Parser_YamlSf_Parser
   {
     $value = str_replace(array("\r\n", "\r"), "\n", $value);
 
-    if ( !preg_match("#\n$#", $value))
+    if (!preg_match("#\n$#", $value))
     {
       $value .= "\n";
     }

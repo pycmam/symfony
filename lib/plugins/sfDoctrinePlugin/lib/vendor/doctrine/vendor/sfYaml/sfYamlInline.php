@@ -8,22 +8,24 @@
  * file that was distributed with this source code.
  */
 
+require_once dirname(__FILE__).'/sfYaml.php';
+
 /**
- * YamlSfInline implements a YAML parser/dumper for the YAML inline syntax.
+ * sfYamlInline implements a YAML parser/dumper for the YAML inline syntax.
  *
  * @package    symfony
- * @subpackage util
+ * @subpackage yaml
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: YamlSfInline.class.php 9186 2008-05-22 15:19:18Z FabianLange $
+ * @version    SVN: $Id: sfYamlInline.class.php 16177 2009-03-11 08:32:48Z fabien $
  */
-class Doctrine_Parser_YamlSf_Inline
+class sfYamlInline
 {
   /**
-   * Load YAML into a PHP array.
+   * Convert a YAML string to a PHP array.
    *
-   * @param string YAML
+   * @param string $value A YAML string
    *
-   * @return array PHP array
+   * @return array A PHP array representing the YAML string
    */
   static public function load($value)
   {
@@ -46,14 +48,25 @@ class Doctrine_Parser_YamlSf_Inline
   }
 
   /**
-   * Dumps PHP array to YAML.
+   * Dumps a given PHP variable to a YAML string.
    *
-   * @param mixed   PHP
+   * @param mixed $value The PHP variable to convert
    *
-   * @return string YAML
+   * @return string The YAML string representing the PHP array
    */
   static public function dump($value)
   {
+    if ('1.1' === sfYaml::getSpecVersion())
+    {
+      $trueValues = array('true', 'on', '+', 'yes', 'y');
+      $falseValues = array('false', 'off', '-', 'no', 'n');
+    }
+    else
+    {
+      $trueValues = array('true');
+      $falseValues = array('false');
+    }
+
     switch (true)
     {
       case is_resource($value):
@@ -62,7 +75,7 @@ class Doctrine_Parser_YamlSf_Inline
         return '!!php/object:'.serialize($value);
       case is_array($value):
         return self::dumpArray($value);
-      case is_null($value):
+      case null === $value:
         return 'null';
       case true === $value:
         return 'true';
@@ -73,16 +86,18 @@ class Doctrine_Parser_YamlSf_Inline
       case is_numeric($value):
         return is_infinite($value) ? str_ireplace('INF', '.Inf', strval($value)) : (is_string($value) ? "'$value'" : $value);
       case false !== strpos($value, "\n"):
-        return sprintf('"%s"', str_replace(array('"', "\n", "\r"), array('\\"', '\n', ''), $value));
-      case preg_match('/[ \s \' " \: \{ \} \[ \] , & \*]/x', $value):
+        return sprintf('"%s"', str_replace(array('"', "\n", "\r"), array('\\"', '\n', '\r'), $value));
+      case preg_match('/[ \s \' " \: \{ \} \[ \] , & \* \#] | \A[ - ? | < > = ! % @ ]/x', $value):
         return sprintf("'%s'", str_replace('\'', '\'\'', $value));
       case '' == $value:
         return "''";
       case preg_match(self::getTimestampRegex(), $value):
         return "'$value'";
-      case in_array(strtolower($value), array('true', 'on', '+', 'yes', 'y')):
+      case in_array(strtolower($value), $trueValues):
         return "'$value'";
-      case in_array(strtolower($value), array('false', 'off', '-', 'no', 'n')):
+      case in_array(strtolower($value), $falseValues):
+        return "'$value'";
+      case in_array(strtolower($value), array('null', '~')):
         return "'$value'";
       default:
         return $value;
@@ -90,11 +105,11 @@ class Doctrine_Parser_YamlSf_Inline
   }
 
   /**
-   * Dumps PHP array to YAML
+   * Dumps a PHP array to a YAML string.
    *
-   * @param array   The array to dump
+   * @param array $value The PHP array to dump
    *
-   * @return string YAML
+   * @return string The YAML string representing the PHP array
    */
   static protected function dumpArray($value)
   {
@@ -125,15 +140,15 @@ class Doctrine_Parser_YamlSf_Inline
   }
 
   /**
-   * Parses scalar to yaml
+   * Parses a scalar to a YAML string.
    *
-   * @param scalar $scalar
-   * @param string $delimiters
-   * @param array  String delimiter
+   * @param scalar  $scalar
+   * @param string  $delimiters
+   * @param array   $stringDelimiter
    * @param integer $i
    * @param boolean $evaluate
    *
-   * @return string YAML
+   * @return string A YAML string
    */
   static public function parseScalar($scalar, $delimiters = null, $stringDelimiters = array('"', "'"), &$i = 0, $evaluate = true)
   {
@@ -148,7 +163,7 @@ class Doctrine_Parser_YamlSf_Inline
     else
     {
       // "normal" string
-      if ( !$delimiters)
+      if (!$delimiters)
       {
         $output = substr($scalar, $i);
         $i += strlen($output);
@@ -176,12 +191,12 @@ class Doctrine_Parser_YamlSf_Inline
   }
 
   /**
-   * Parses quotes scalar
+   * Parses a quoted scalar to YAML.
    *
-   * @param string $scalar
+   * @param string  $scalar
    * @param integer $i
    *
-   * @return string YAML
+   * @return string A YAML string
    */
   static protected function parseQuotedScalar($scalar, &$i)
   {
@@ -213,19 +228,19 @@ class Doctrine_Parser_YamlSf_Inline
     if ('"' == $delimiter)
     {
       // evaluate the string
-      $buffer = str_replace('\\n', "\n", $buffer);
+      $buffer = str_replace(array('\\n', '\\r'), array("\n", "\r"), $buffer);
     }
 
     return $buffer;
   }
 
   /**
-   * Parse sequence to yaml
+   * Parses a sequence to a YAML string.
    *
-   * @param string $sequence
+   * @param string  $sequence
    * @param integer $i
    *
-   * @return string YAML
+   * @return string A YAML string
    */
   static protected function parseSequence($sequence, &$i = 0)
   {
@@ -255,7 +270,7 @@ class Doctrine_Parser_YamlSf_Inline
           $isQuoted = in_array($sequence[$i], array('"', "'"));
           $value = self::parseScalar($sequence, array(',', ']'), array('"', "'"), $i);
 
-          if ( !$isQuoted && false !== strpos($value, ': '))
+          if (!$isQuoted && false !== strpos($value, ': '))
           {
             // embedded mapping?
             try
@@ -280,12 +295,12 @@ class Doctrine_Parser_YamlSf_Inline
   }
 
   /**
-   * Parses mapping.
+   * Parses a mapping to a YAML string.
    *
-   * @param string $mapping
+   * @param string  $mapping
    * @param integer $i
    *
-   * @return string YAML
+   * @return string A YAML string
    */
   static protected function parseMapping($mapping, &$i = 0)
   {
@@ -351,11 +366,22 @@ class Doctrine_Parser_YamlSf_Inline
    *
    * @param string $scalar
    *
-   * @return string YAML
+   * @return string A YAML string
    */
   static protected function evaluateScalar($scalar)
   {
     $scalar = trim($scalar);
+
+    if ('1.1' === sfYaml::getSpecVersion())
+    {
+      $trueValues = array('true', 'on', '+', 'yes', 'y');
+      $falseValues = array('false', 'off', '-', 'no', 'n');
+    }
+    else
+    {
+      $trueValues = array('true');
+      $falseValues = array('false');
+    }
 
     switch (true)
     {
@@ -372,12 +398,10 @@ class Doctrine_Parser_YamlSf_Inline
       case ctype_digit($scalar):
         $raw = $scalar;
         $cast = intval($scalar);
-
-        return '0' == $scalar[0]
-          ? octdec($scalar) : (((string) $raw == (string) $cast) ? strval($cast) : $raw);
-      case in_array(strtolower($scalar), array('true', 'on', '+', 'yes', 'y')):
+        return '0' == $scalar[0] ? octdec($scalar) : (((string) $raw == (string) $cast) ? $cast : $raw);
+      case in_array(strtolower($scalar), $trueValues):
         return true;
-      case in_array(strtolower($scalar), array('false', 'off', '-', 'no', 'n')):
+      case in_array(strtolower($scalar), $falseValues):
         return false;
       case is_numeric($scalar):
         return '0x' == $scalar[0].$scalar[1] ? hexdec($scalar) : floatval($scalar);

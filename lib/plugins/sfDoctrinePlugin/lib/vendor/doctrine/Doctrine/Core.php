@@ -35,7 +35,7 @@ class Doctrine_Core
     /**
      * VERSION
      */
-    const VERSION                   = '1.2.0-ALPHA3';
+    const VERSION                   = '1.2.0-BETA1';
 
     /**
      * ERROR CONSTANTS
@@ -206,6 +206,7 @@ class Doctrine_Core
     const ATTR_CASCADE_SAVES                = 174;
     const ATTR_COLLECTION_CLASS             = 175;
     const ATTR_TABLE_CLASS                  = 176;
+    const ATTR_USE_NATIVE_SET               = 177;
 
     /**
      * LIMIT CONSTANTS
@@ -615,8 +616,9 @@ class Doctrine_Core
      * @param  string   $directory      Path to directory of models or array of directory paths
      * @param  integer  $modelLoading   Pass value of Doctrine_Core::ATTR_MODEL_LOADING to force a certain style of model loading
      *                                  Allowed Doctrine_Core::MODEL_LOADING_AGGRESSIVE(default) or Doctrine_Core::MODEL_LOADING_CONSERVATIVE
+     * @param  string  $classPrefix     The class prefix of the models to load. This is useful if the class name and file name are not the same
      */
-    public static function loadModels($directory, $modelLoading = null)
+    public static function loadModels($directory, $modelLoading = null, $classPrefix = null)
     {
         $manager = Doctrine_Manager::getInstance();
 
@@ -638,6 +640,10 @@ class Doctrine_Core
                     
                     if (end($e) === 'php' && strpos($file->getFileName(), '.inc') === false) {
                         $className = $e[0];
+
+                        if ($classPrefix) {
+                            $className = $classPrefix . $className;
+                        }
 
                         if ( ! class_exists($className, false)) {
                             if ($modelLoading == Doctrine_Core::MODEL_LOADING_CONSERVATIVE) {
