@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: Manager.php 6484 2009-10-12 17:40:41Z jwage $
+ *  $Id: Manager.php 6629 2009-11-03 01:53:57Z jwage $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -29,7 +29,7 @@
  * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
  * @link        www.phpdoctrine.org
  * @since       1.0
- * @version     $Revision: 6484 $
+ * @version     $Revision: 6629 $
  * @author      Konsta Vesterinen <kvesteri@cc.hut.fi>
  */
 class Doctrine_Manager extends Doctrine_Configurable implements Countable, IteratorAggregate
@@ -545,7 +545,7 @@ class Doctrine_Manager extends Doctrine_Configurable implements Countable, Itera
      */
     public function getConnectionForComponent($componentName)
     {
-        Doctrine_Core::autoload($componentName);
+        Doctrine_Core::modelsAutoload($componentName);
 
         if (isset($this->_bound[$componentName])) {
             return $this->getConnection($this->_bound[$componentName]);
@@ -553,7 +553,7 @@ class Doctrine_Manager extends Doctrine_Configurable implements Countable, Itera
 
         return $this->getCurrentConnection();
     }
-    
+
     /**
      * Check if a component is bound to a connection
      *

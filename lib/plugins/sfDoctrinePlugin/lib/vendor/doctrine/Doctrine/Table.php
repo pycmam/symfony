@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: Table.php 6532 2009-10-16 23:12:59Z jwage $
+ *  $Id: Table.php 6638 2009-11-03 05:19:18Z jwage $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -28,7 +28,7 @@
  * @package     Doctrine
  * @subpackage  Table
  * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
- * @version     $Revision: 6532 $
+ * @version     $Revision: 6638 $
  * @link        www.phpdoctrine.org
  * @since       1.0
  * @method mixed findBy*(mixed $value) magic finders; @see __call()
@@ -1822,7 +1822,7 @@ class Doctrine_Table extends Doctrine_Configurable implements Countable
                 if ($record->getTable()->getAttribute(Doctrine_Core::ATTR_HYDRATE_OVERWRITE)) {
                     $record->hydrate($this->_data);
                     if ($record->state() == Doctrine_Record::STATE_PROXY) {
-                        if (count($this->_data) >= $this->getColumnCount()) {
+                        if (!$record->isInProxyState()) {
                             $record->state(Doctrine_Record::STATE_CLEAN);
                         }
                     }
@@ -2043,6 +2043,21 @@ class Doctrine_Table extends Doctrine_Configurable implements Countable
                 $enumIndex = $this->enumIndex($fieldName, $value);
                 if ($enumIndex === false && $value !== null) {
                     $errorStack->add($fieldName, 'enum');
+                }
+            }
+            if ($dataType == 'set') {
+                $values = $this->_columns[$fieldName]['values'];
+                // Convert string to array
+                if (is_string($value)) {
+                    $value = explode(',', $value);
+                    $value = array_map('trim', $value);
+                    $record->set($fieldName, $value);
+                }
+                // Make sure each set value is valid
+                foreach ($value as $k => $v) {
+                    if ( ! in_array($v, $values)) {
+                        $errorStack->add($fieldName, 'set');
+                    }
                 }
             }
         }
@@ -2295,6 +2310,9 @@ class Doctrine_Table extends Doctrine_Configurable implements Countable
                 break;
                 case 'enum':
                     return $this->enumValue($fieldName, $value);
+                break;
+                case 'set':
+                    return explode(',', $value);
                 break;
                 case 'boolean':
                     return (boolean) $value;

@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: Mysql.php 6484 2009-10-12 17:40:41Z jwage $
+ *  $Id: Mysql.php 6638 2009-11-03 05:19:18Z jwage $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -25,7 +25,7 @@
  * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
  * @author      Konsta Vesterinen <kvesteri@cc.hut.fi>
  * @author      Lukas Smith <smith@pooteeweet.org> (PEAR MDB2 library)
- * @version     $Revision: 6484 $
+ * @version     $Revision: 6638 $
  * @link        www.phpdoctrine.org
  * @since       1.0
  */
@@ -149,6 +149,16 @@ class Doctrine_DataDict_Mysql extends Doctrine_DataDict
                       $values[] = $this->conn->quote($value, 'varchar');
                     }
                     return 'ENUM('.implode(', ', $values).')';
+                } else {
+                    $field['length'] = isset($field['length']) && $field['length'] ? $field['length']:255;
+                }
+            case 'set':
+                if ($this->conn->getAttribute(Doctrine_Core::ATTR_USE_NATIVE_SET)) {
+                    $values = array();
+                    foreach ($field['values'] as $value) {
+                        $values[] = $this->conn->quote($value, 'varchar');
+                    }
+                    return 'SET('.implode(', ', $values).')';
                 } else {
                     $field['length'] = isset($field['length']) && $field['length'] ? $field['length']:255;
                 }

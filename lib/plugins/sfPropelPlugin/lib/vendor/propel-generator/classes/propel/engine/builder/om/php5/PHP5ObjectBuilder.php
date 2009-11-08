@@ -1,7 +1,7 @@
 <?php
 
 /*
- *  $Id: PHP5ObjectBuilder.php 1262 2009-10-26 20:54:39Z francois $
+ *  $Id: PHP5ObjectBuilder.php 1294 2009-11-07 23:21:49Z francois $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -134,6 +134,8 @@ class PHP5ObjectBuilder extends ObjectBuilder {
 						$defaultValue = var_export($defDt->format($fmt), true);
 					}
 				} catch (Exception $x) {
+					// prevent endless loop when timezone is undefined
+					date_default_timezone_set('America/Los_Angeles');
 					throw new EngineException("Unable to parse default temporal value for " . $col->getFullyQualifiedName() . ": " .$this->getDefaultValueString($col), $x);
 				}
 			} else {

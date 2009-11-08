@@ -18,7 +18,7 @@
  * @subpackage exception
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
  * @author     Sean Kerr <sean@code-box.org>
- * @version    SVN: $Id: sfException.class.php 23186 2009-10-19 14:43:29Z fabien $
+ * @version    SVN: $Id: sfException.class.php 23612 2009-11-04 13:22:20Z fabien $
  */
 class sfException extends Exception
 {
@@ -208,7 +208,7 @@ class sfException extends Exception
       $globalsTable  = self::formatArrayAsHtml(sfDebug::globalsAsArray());
     }
 
-    if ($response)
+    if (isset($response) && $response)
     {
       $response->sendHttpHeaders();
     }

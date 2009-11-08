@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: Connection.php 6484 2009-10-12 17:40:41Z jwage $
+ *  $Id: Connection.php 6635 2009-11-03 03:32:26Z jwage $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -49,7 +49,7 @@
  * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
  * @link        www.phpdoctrine.org
  * @since       1.0
- * @version     $Revision: 6484 $
+ * @version     $Revision: 6635 $
  * @author      Konsta Vesterinen <kvesteri@cc.hut.fi>
  * @author      Lukas Smith <smith@pooteeweet.org> (MDB2 library)
  */
@@ -916,7 +916,7 @@ abstract class Doctrine_Connection extends Doctrine_Configurable implements Coun
         } catch(Doctrine_Adapter_Exception $e) {
         } catch(PDOException $e) { }
 
-        $this->rethrowException($e, $this);
+        $this->rethrowException($e, $this, $statement);
     }
 
     /**
@@ -1012,7 +1012,7 @@ abstract class Doctrine_Connection extends Doctrine_Configurable implements Coun
         } catch (Doctrine_Adapter_Exception $e) {
         } catch (PDOException $e) { }
 
-        $this->rethrowException($e, $this);
+        $this->rethrowException($e, $this, $query);
     }
 
     /**
@@ -1048,7 +1048,7 @@ abstract class Doctrine_Connection extends Doctrine_Configurable implements Coun
         } catch (Doctrine_Adapter_Exception $e) {
         } catch (PDOException $e) { }
 
-        $this->rethrowException($e, $this);
+        $this->rethrowException($e, $this, $query);
     }
 
     /**
@@ -1056,7 +1056,7 @@ abstract class Doctrine_Connection extends Doctrine_Configurable implements Coun
      *
      * @throws Doctrine_Connection_Exception
      */
-    public function rethrowException(Exception $e, $invoker)
+    public function rethrowException(Exception $e, $invoker, $query = null)
     {
         $event = new Doctrine_Event($this, Doctrine_Event::CONN_ERROR);
 
@@ -1064,7 +1064,12 @@ abstract class Doctrine_Connection extends Doctrine_Configurable implements Coun
         
         $name = 'Doctrine_Connection_' . $this->driverName . '_Exception';
 
-        $exc  = new $name($e->getMessage(), (int) $e->getCode());
+        $message = $e->getMessage();
+        if ($query) {
+            $message .= sprintf('. Failing Query: "%s"', $query);
+        }
+
+        $exc  = new $name($message, (int) $e->getCode());
         if ( ! isset($e->errorInfo) || ! is_array($e->errorInfo)) {
             $e->errorInfo = array(null, null, null, null);
         }

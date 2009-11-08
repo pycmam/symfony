@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: Propel.php 1262 2009-10-26 20:54:39Z francois $
+ *  $Id: Propel.php 1299 2009-11-08 13:39:31Z francois $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -37,7 +37,7 @@ require 'propel/util/PropelPDO.php';
  * @author     Martin Poeschl <mpoeschl@marmot.at> (Torque)
  * @author     Henning P. Schmiedehausen <hps@intermeta.de> (Torque)
  * @author     Kurt Schrader <kschrader@karmalab.org> (Torque)
- * @version    $Revision: 1262 $
+ * @version    $Revision: 1299 $
  * @package    propel
  */
 class Propel
@@ -90,7 +90,7 @@ class Propel
 	/**
 	 * The Propel version.
 	 */
-	const VERSION = '1.4.0-dev';
+	const VERSION = '1.4.0';
 
 	/**
 	 * The class name for a PDO object.
