@@ -13,7 +13,7 @@
  *
  * @package    lime
  * @author     Fabien Potencier <fabien.potencier@gmail.com>
- * @version    SVN: $Id: lime.php 23217 2009-10-20 20:58:51Z FabianLange $
+ * @version    SVN: $Id: lime.php 23736 2009-11-09 23:07:17Z FabianLange $
  */
 class lime_test
 {
@@ -134,20 +134,20 @@ class lime_test
 
     if ($total > $plan)
     {
-      $this->output->red_bar(sprintf(" Looks like you planned %d tests but ran %d extra.", $plan, $total - $plan));
+      $this->output->red_bar(sprintf("# Looks like you planned %d tests but ran %d extra.", $plan, $total - $plan));
     }
     elseif ($total < $plan)
     {
-      $this->output->red_bar(sprintf(" Looks like you planned %d tests but only ran %d.", $plan, $total));
+      $this->output->red_bar(sprintf("# Looks like you planned %d tests but only ran %d.", $plan, $total));
     }
 
     if ($failed)
     {
-      $this->output->red_bar(sprintf(" Looks like you failed %d tests of %d.", $failed, $passed + $failed));
+      $this->output->red_bar(sprintf("# Looks like you failed %d tests of %d.", $failed, $passed + $failed));
     }
     else if ($total == $plan)
     {
-      $this->output->green_bar(" Looks like everything went fine.");
+      $this->output->green_bar("# Looks like everything went fine.");
     }
 
     flush();

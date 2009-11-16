@@ -14,7 +14,7 @@
  * @package    symfony
  * @subpackage propel
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfPropelBaseTask.class.php 23309 2009-10-24 14:54:47Z Kris.Wallsmith $
+ * @version    SVN: $Id: sfPropelBaseTask.class.php 23739 2009-11-09 23:32:46Z Kris.Wallsmith $
  */
 abstract class sfPropelBaseTask extends sfBaseTask
 {
@@ -211,8 +211,8 @@ abstract class sfPropelBaseTask extends sfBaseTask
 
     // Call phing targets
     sfToolkit::addIncludePath(array(
-      sfConfig::get('sf_root_dir'),
-      realpath(dirname(__FILE__).'/../vendor/propel-generator/classes'),
+      sfConfig::get('sf_symfony_lib_dir'),
+      sfConfig::get('sf_propel_generator_path', realpath(dirname(__FILE__).'/../vendor/propel-generator/classes')),
     ));
 
     $args = array();

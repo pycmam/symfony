@@ -16,7 +16,7 @@
  * @package    symfony
  * @subpackage debug
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfWebDebugPanelPropel.class.php 23334 2009-10-25 21:54:05Z FabianLange $
+ * @version    SVN: $Id: sfWebDebugPanelPropel.class.php 23704 2009-11-08 22:19:19Z FabianLange $
  */
 class sfWebDebugPanelPropel extends sfWebDebugPanel
 {
@@ -52,7 +52,7 @@ class sfWebDebugPanelPropel extends sfWebDebugPanel
   {
     return '
       <div id="sfWebDebugDatabaseLogs">
-        <p>Propel Version: '.Propel::VERSION.'</p>
+        <h3>Propel Version: '.Propel::VERSION.'</h3>
         <ol>'.implode("\n", $this->getSqlLogs()).'</ol>
       </div>
     ';
@@ -73,7 +73,11 @@ class sfWebDebugPanelPropel extends sfWebDebugPanel
    */
   protected function getSqlLogs()
   {
-    $threshold = $this->getSlowQueryThreshold();
+    $config    = $this->getPropelConfiguration();
+    $outerGlue = $config->getParameter('debugpdo.logging.outerglue', ' | ');
+    $innerGlue = $config->getParameter('debugpdo.logging.innerglue', ': ');
+    $flagSlow  = $config->getParameter('debugpdo.logging.details.slow.enabled', false);
+    $threshold = $config->getParameter('debugpdo.logging.details.slow.threshold', DebugPDO::DEFAULT_SLOW_THRESHOLD);
 
     $html = array();
     foreach ($this->webDebug->getLogger()->getLogs() as $log)
@@ -83,40 +87,47 @@ class sfWebDebugPanelPropel extends sfWebDebugPanel
         continue;
       }
 
-      // parse log message for details
       $details = array();
-      $class = '';
+      $slowQuery = false;
 
-      $parts = explode(' | ', $log['message']);
+      $parts = explode($outerGlue, $log['message']);
       foreach ($parts as $i => $part)
       {
-        if (preg_match('/^(\w+):\s+(.*)/', $part, $match))
+        // is this a key-glue-value fragment ?
+        if (preg_match('/^(\w+)'.preg_quote($innerGlue, '/').'(.*)/', $part, $match))
         {
           $details[] = $part;
           unset($parts[$i]);
 
           // check for slow query
-          if ('time' == $match[1] && (float) $match[2] > $threshold)
+          if ('time' == $match[1])
           {
-            $class = 'sfWebDebugWarning';
-            if ($this->getStatus() > sfLogger::NOTICE)
+            if ($flagSlow && (float) $match[2] > $threshold)
             {
-              $this->setStatus(sfLogger::NOTICE);
+              $slowQuery = true;
+              if ($this->getStatus() > sfLogger::NOTICE)
+              {
+                $this->setStatus(sfLogger::NOTICE);
+              }
             }
           }
         }
       }
-      $query = join(' | ', $parts);
+      // all stuff that has not been eaten by the loop should be the query string
+      $query = join($outerGlue, $parts);
+
+      $query = $this->formatSql(htmlspecialchars($query, ENT_QUOTES, sfConfig::get('sf_charset')));
+      $backtrace = isset($log['debug_backtrace']) ? '&nbsp;'.$this->getToggleableDebugStack($log['debug_backtrace']) : '';
 
       $html[] = sprintf('
         <li class="%s">
           <p class="sfWebDebugDatabaseQuery">%s</p>
           <div class="sfWebDebugDatabaseLogInfo">%s%s</div>
         </li>',
-        $class,
-        $this->formatSql(htmlspecialchars($query, ENT_QUOTES, sfConfig::get('sf_charset'))),
+        $slowQuery ? 'sfWebDebugWarning' : '',
+        $query,
         implode(', ', $details),
-        count($log['debug_backtrace']) ? '&nbsp;'.$this->getToggleableDebugStack($log['debug_backtrace']) : ''
+        $backtrace
       );
     }
 
@@ -124,12 +135,12 @@ class sfWebDebugPanelPropel extends sfWebDebugPanel
   }
 
   /**
-   * Returns the slow query threshold.
-   * 
-   * @return integer|null
+   * Returns the current PropelConfiguration.
+   *
+   * @return PropelConfiguration
    */
-  protected function getSlowQueryThreshold()
+  protected function getPropelConfiguration()
   {
-    return Propel::getConfiguration(PropelConfiguration::TYPE_OBJECT)->getParameter('debugpdo.logging.details.slow.threshold');
+    return Propel::getConfiguration(PropelConfiguration::TYPE_OBJECT);
   }
 }

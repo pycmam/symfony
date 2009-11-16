@@ -14,7 +14,7 @@
  * @package    symfony
  * @subpackage task
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfTestUnitTask.class.php 23200 2009-10-19 21:29:50Z Kris.Wallsmith $
+ * @version    SVN: $Id: sfTestUnitTask.class.php 23740 2009-11-09 23:48:16Z FabianLange $
  */
 class sfTestUnitTask extends sfTestBaseTask
 {
@@ -78,9 +78,16 @@ EOF;
         $files = array_merge($files, $finder->in(sfConfig::get('sf_test_dir').'/unit/'.dirname($name)));
       }
 
-      foreach ($this->filterTestFiles($files, $arguments, $options) as $file)
+      if($allFiles = $this->filterTestFiles($files, $arguments, $options))
       {
-        include($file);
+        foreach ($allFiles as $file)
+        {
+          include($file);
+        }
+      }
+      else
+      {
+        $this->logSection('test', 'no tests found', null, 'ERROR');
       }
     }
     else

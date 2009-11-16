@@ -14,7 +14,7 @@
  * @package    symfony
  * @subpackage widget
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfWidgetFormI18nChoiceLanguage.class.php 11842 2008-09-29 10:53:28Z fabien $
+ * @version    SVN: $Id: sfWidgetFormI18nChoiceLanguage.class.php 23810 2009-11-12 11:07:44Z Kris.Wallsmith $
  */
 class sfWidgetFormI18nChoiceLanguage extends sfWidgetFormChoice
 {
@@ -24,7 +24,7 @@ class sfWidgetFormI18nChoiceLanguage extends sfWidgetFormChoice
    * Available options:
    *
    *  * culture:   The culture to use for internationalized strings
-   *  * languages: An array of language codes to use (ISO 639-1)
+   *  * languages: An array of language codes to use
    *  * add_empty: Whether to add a first empty value or not (false by default)
    *               If the option is not a Boolean, the value will be used as the text value
    *

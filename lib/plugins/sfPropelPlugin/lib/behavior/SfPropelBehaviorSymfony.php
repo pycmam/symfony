@@ -14,7 +14,7 @@
  * @package     sfPropelPlugin
  * @subpackage  behavior
  * @author      Kris Wallsmith <kris.wallsmith@symfony-project.com>
- * @version     SVN: $Id: SfPropelBehaviorSymfony.php 23310 2009-10-24 15:27:41Z Kris.Wallsmith $
+ * @version     SVN: $Id: SfPropelBehaviorSymfony.php 23737 2009-11-09 23:23:25Z Kris.Wallsmith $
  */
 class SfPropelBehaviorSymfony extends SfPropelBehaviorBase
 {
@@ -38,7 +38,7 @@ class SfPropelBehaviorSymfony extends SfPropelBehaviorBase
       // symfony behaviors
       if (!isset($behaviors['symfony_behaviors']) && $this->getBuildProperty('propel.builder.addBehaviors'))
       {
-        $class = sfPropel::importClass($this->getBuildProperty('propel.behavior.symfony_behaviors.class'));
+        $class = Propel::importClass($this->getBuildProperty('propel.behavior.symfony_behaviors.class'));
         $behavior = new $class();
         $behavior->setName('symfony_behaviors');
         $table->addBehavior($behavior);
@@ -63,7 +63,7 @@ class SfPropelBehaviorSymfony extends SfPropelBehaviorBase
 
         if ($parameters)
         {
-          $class = sfPropel::importClass($this->getBuildProperty('propel.behavior.symfony_timestampable.class'));
+          $class = Propel::importClass($this->getBuildProperty('propel.behavior.symfony_timestampable.class'));
           $behavior = new $class();
           $behavior->setName('symfony_timestampable');
           $behavior->setParameters($parameters);

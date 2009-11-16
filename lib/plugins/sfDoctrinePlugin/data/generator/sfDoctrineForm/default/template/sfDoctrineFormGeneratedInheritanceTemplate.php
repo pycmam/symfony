@@ -8,7 +8,7 @@
  * @package    ##PROJECT_NAME##
  * @subpackage form
  * @author     ##AUTHOR_NAME##
- * @version    SVN: $Id$
+ * @version    SVN: $Id: sfDoctrineFormGeneratedInheritanceTemplate.php 24017 2009-11-16 14:03:46Z Kris.Wallsmith $
  */
 class Base<?php echo $this->modelName ?>Form extends <?php echo $this->getFormClassToExtend() . "\n" ?>
 {
@@ -71,7 +71,7 @@ class Base<?php echo $this->modelName ?>Form extends <?php echo $this->getFormCl
       return;
     }
 
-    if (is_null($con))
+    if (null === $con)
     {
       $con = $this->getConnection();
     }
