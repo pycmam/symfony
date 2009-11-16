@@ -14,7 +14,7 @@
  * @package    symfony
  * @subpackage task
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfProjectDeployTask.class.php 23439 2009-10-29 16:21:03Z fabien $
+ * @version    SVN: $Id: sfProjectDeployTask.class.php 23718 2009-11-09 10:51:36Z fabien $
  */
 class sfProjectDeployTask extends sfBaseTask
 {
@@ -167,7 +167,7 @@ EOF;
     $this->clearBuffers();
   }
 
-  public function logOutput($output, $color = null)
+  public function logOutput($output)
   {
     if (false !== $pos = strpos($output, "\n"))
     {

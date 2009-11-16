@@ -14,7 +14,7 @@
  * @package    symfony
  * @subpackage config
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfProjectConfiguration.class.php 23336 2009-10-25 22:04:08Z FabianLange $
+ * @version    SVN: $Id: sfProjectConfiguration.class.php 24014 2009-11-16 13:30:53Z Kris.Wallsmith $
  */
 class sfProjectConfiguration
 {
@@ -266,27 +266,27 @@ class sfProjectConfiguration
     $globalConfigPath = basename(dirname($configPath)).'/'.basename($configPath);
 
     $files = array(
-      sfConfig::get('sf_symfony_lib_dir').'/config/'.$globalConfigPath,              // symfony
+      $this->getSymfonyLibDir().'/config/'.$globalConfigPath, // symfony
     );
 
     foreach ($this->getPluginPaths() as $path)
     {
       if (is_file($file = $path.'/'.$globalConfigPath))
       {
-        $files[] = $file;                                                            // plugins
+        $files[] = $file;                                     // plugins
       }
     }
 
     $files = array_merge($files, array(
-      sfConfig::get('sf_root_dir').'/'.$globalConfigPath,                            // project
-      sfConfig::get('sf_root_dir').'/'.$configPath,                                  // project
+      $this->getRootDir().'/'.$globalConfigPath,              // project
+      $this->getRootDir().'/'.$configPath,                    // project
     ));
 
     foreach ($this->getPluginPaths() as $path)
     {
       if (is_file($file = $path.'/'.$configPath))
       {
-        $files[] = $file;                                                            // plugins
+        $files[] = $file;                                     // plugins
       }
     }
 
@@ -439,35 +439,34 @@ class sfProjectConfiguration
    * Gets the paths to plugins root directories, minding overloaded plugins.
    *
    * @return array The plugin root paths.
+   *
+   * @throws InvalidArgumentException If an enabled plugin does not exist
    */
   public function getPluginPaths()
   {
-    if (null !== $this->cache['getPluginPaths'])
+    if (!isset($this->cache['getPluginPaths']))
     {
-      return $this->cache['getPluginPaths'];
-    }
-
-    if (array_key_exists('', $this->pluginPaths))
-    {
-      return $this->pluginPaths[''];
-    }
-
-    $pluginPaths = $this->getAllPluginPaths();
-
-    $this->pluginPaths[''] = array();
-    foreach ($this->getPlugins() as $plugin)
-    {
-      if (isset($pluginPaths[$plugin]))
+      if (!isset($this->pluginPaths['']))
       {
-        $this->pluginPaths[''][] = $pluginPaths[$plugin];
-      }
-      else
-      {
-        throw new InvalidArgumentException(sprintf('The plugin "%s" does not exist.', $plugin));
-      }
-    }
+        $pluginPaths = $this->getAllPluginPaths();
 
-    return $this->pluginPaths[''];
+        $this->pluginPaths[''] = array();
+        foreach ($this->getPlugins() as $plugin)
+        {
+          if (isset($pluginPaths[$plugin]))
+          {
+            $this->pluginPaths[''][] = $pluginPaths[$plugin];
+          }
+          else
+          {
+            throw new InvalidArgumentException(sprintf('The plugin "%s" does not exist.', $plugin));
+          }
+        }
+      }
+
+      $this->cache['getPluginPaths'] = $this->pluginPaths[''];
+    }
+    return $this->cache['getPluginPaths'];
   }
 
   /**
@@ -483,7 +482,7 @@ class sfProjectConfiguration
     // follow links and do not recurse. No need to exclude VC because they do not end with *Plugin
     $finder = sfFinder::type('dir')->maxdepth(0)->ignore_version_control(false)->follow_link()->name('*Plugin');
     $dirs = array(
-      sfConfig::get('sf_symfony_lib_dir').'/plugins',
+      $this->getSymfonyLibDir().'/plugins',
       sfConfig::get('sf_plugins_dir'),
     );
 

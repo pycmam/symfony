@@ -16,7 +16,7 @@
  * @subpackage helper
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
  * @author     David Heinemeier Hansson
- * @version    SVN: $Id: AssetHelper.php 22402 2009-09-25 05:16:05Z Kris.Wallsmith $
+ * @version    SVN: $Id: AssetHelper.php 23991 2009-11-15 21:42:37Z FabianLange $
  */
 
 /**
@@ -410,6 +410,14 @@ function _compute_public_path($source, $dir, $ext, $absolute = false)
   if ($sf_relative_url_root && 0 !== strpos($source, $sf_relative_url_root))
   {
     $source = $sf_relative_url_root.$source;
+  }
+
+  $file = sfConfig::get('sf_web_dir').$source;
+  if (sfConfig::get('sf_asset_timestamp') && is_readable($file))
+  {
+    $stat = stat($file);
+    $query_string .= $query_string ? '&' : '?';
+    $query_string .= $stat['mtime'];
   }
 
   if ($absolute)

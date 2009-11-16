@@ -16,7 +16,7 @@
  * @package    symfony
  * @subpackage routing
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfPatternRouting.class.php 23430 2009-10-29 13:55:10Z FabianLange $
+ * @version    SVN: $Id: sfPatternRouting.class.php 23993 2009-11-15 22:44:01Z FabianLange $
  */
 class sfPatternRouting extends sfRouting
 {
@@ -78,10 +78,7 @@ class sfPatternRouting extends sfRouting
   {
     if ($this->options['load_configuration'] && $config = $this->getConfigFilename())
     {
-      foreach (include($config) as $name => $route)
-      {
-        $this->routes[$name] = $route;
-      }
+      include($config);
     }
 
     parent::loadConfiguration();
@@ -253,46 +250,6 @@ class sfPatternRouting extends sfRouting
     $route->setDefaultParameters($this->defaultParameters);
     $route->setDefaultOptions($this->options);
   }
-
-  /**
-   * Sets a default parameter.
-   *
-   * @param string $key    The key
-   * @param string $value  The value
-   */
-/*
-  public function setDefaultParameter($key, $value)
-  {
-    parent::setDefaultParameter($key, $value);
-    foreach ($this->routes as $name => $route)
-    {
-      if (is_string($route))
-      {
-        $route = $this->loadRoute($name);
-      }
-      $route->setDefaultParameters($this->defaultParameters);
-    }
-  }
-*/
-  /**
-   * Sets the default parameters for URL generation.
-   *
-   * @param array $parameters  An array of default parameters
-   */
-/*
-  public function setDefaultParameters($parameters)
-  {
-    parent::setDefaultParameters($parameters);
-    foreach ($this->routes as $name => $route)
-    {
-      if (is_string($route))
-      {
-        $route = $this->loadRoute($name);
-      }
-      $route->setDefaultParameters($this->defaultParameters);
-    }
-  }
-*/
 
   /**
    * @see sfRouting

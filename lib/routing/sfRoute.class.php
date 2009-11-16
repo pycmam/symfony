@@ -14,7 +14,7 @@
  * @package    symfony
  * @subpackage routing
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfRoute.class.php 22273 2009-09-23 07:15:50Z fabien $
+ * @version    SVN: $Id: sfRoute.class.php 23995 2009-11-15 23:22:43Z FabianLange $
  */
 class sfRoute implements Serializable
 {
@@ -783,62 +783,17 @@ class sfRoute implements Serializable
     }
   }
 
-  /**
-   * Sets the data representing this compiled route.
-   *
-   * @param array $data An array of data representing the compiled route
-   */
-  public function setCompiledData($data)
-  {
-    $this->tokens = $data['tokens'];
-    $this->defaultParameters = $data['default_parameters'];
-    $this->defaultOptions = $data['default_options'];
-    $this->options = $data['options'];
-    $this->pattern = $data['pattern'];
-    $this->regex = $data['regex'];
-    $this->variables = $data['variables'];
-    $this->defaults = $data['defaults'];
-    $this->requirements = $data['requirements'];
-
-    $this->compiled = true;
-  }
-
-  /**
-   * Returns the data representing this compiled route.
-   *
-   * @return array An array of data representing the compiled route
-   */
-  public function getCompiledData()
-  {
-    if (!$this->compiled)
-    {
-      $this->compile();
-    }
-
-    return array(
-      'tokens'             => $this->tokens,
-      'default_parameters' => $this->defaultParameters,
-      'default_options'    => $this->defaultOptions,
-      'options'            => $this->options,
-      'pattern'            => $this->pattern,
-      'regex'              => $this->regex,
-      'variables'          => $this->variables,
-      'defaults'           => $this->defaults,
-      'requirements'       => $this->requirements,
-      'suffix'             => $this->suffix,
-    );
-  }
-
   public function serialize()
   {
     // always serialize compiled routes
     $this->compile();
-
-    return serialize(array($this->tokens, $this->defaultParameters, $this->defaultOptions, $this->compiled, $this->options, $this->pattern, $this->regex, $this->variables, $this->defaults, $this->requirements, $this->suffix));
+    // sfPatternRouting will always re-set defaultParameters, so no need to serialize them
+    return serialize(array($this->tokens, $this->defaultOptions, $this->options, $this->pattern, $this->regex, $this->variables, $this->defaults, $this->requirements, $this->suffix));
   }
 
   public function unserialize($data)
   {
-    list($this->tokens, $this->defaultParameters, $this->defaultOptions, $this->compiled, $this->options, $this->pattern, $this->regex, $this->variables, $this->defaults, $this->requirements, $this->suffix) = unserialize($data);
+    list($this->tokens, $this->defaultOptions, $this->options, $this->pattern, $this->regex, $this->variables, $this->defaults, $this->requirements, $this->suffix) = unserialize($data);
+    $this->compiled = true;
   }
 }

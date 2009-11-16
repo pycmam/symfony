@@ -16,7 +16,7 @@
  * @package     sfPropelPlugin
  * @subpackage  behavior
  * @author      Kris Wallsmith <kris.wallsmith@symfony-project.com>
- * @version     SVN: $Id: SfPropelBehaviorI18n.php 23310 2009-10-24 15:27:41Z Kris.Wallsmith $
+ * @version     SVN: $Id: SfPropelBehaviorI18n.php 24008 2009-11-16 12:45:47Z Kris.Wallsmith $
  */
 class SfPropelBehaviorI18n extends SfPropelBehaviorBase
 {
@@ -29,7 +29,7 @@ class SfPropelBehaviorI18n extends SfPropelBehaviorBase
    */
   public function modifyDatabase()
   {
-    $translationBehavior = sfPropel::importClass($this->getBuildProperty('propel.behavior.symfony_i18n_translation.class'));
+    $translationBehavior = Propel::importClass($this->getBuildProperty('propel.behavior.symfony_i18n_translation.class'));
 
     foreach ($this->getDatabase()->getTables() as $table)
     {
@@ -173,7 +173,8 @@ public function getCurrent{$refPhpName}(\$culture = null)
 
   if (!isset(\$this->current_i18n[\$culture]))
   {
-    if (\$object = {$this->getI18nTable()->getPhpName()}Peer::retrieveByPK(\$this->getPrimaryKey(), \$culture))
+    \$object = \$this->isNew() ? null : {$this->getI18nTable()->getPhpName()}Peer::retrieveByPK(\$this->getPrimaryKey(), \$culture);
+    if (\$object)
     {
       \$this->set{$refPhpName}ForCulture(\$object, \$culture);
     }
