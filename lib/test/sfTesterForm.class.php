@@ -19,6 +19,7 @@
 class sfTesterForm extends sfTester
 {
   protected
+    $forms = array(),
     $form = null;
 
   /**
@@ -40,6 +41,7 @@ class sfTesterForm extends sfTester
   public function prepare()
   {
     $this->form = null;
+    $this->forms = array();
   }
 
   /**
@@ -47,7 +49,7 @@ class sfTesterForm extends sfTester
    */
   public function initialize()
   {
-    if (null === $this->form)
+    if (!$this->forms)
     {
       $action = $this->browser->getContext()->getActionStack()->getLastEntry()->getActionInstance();
 
@@ -56,10 +58,27 @@ class sfTesterForm extends sfTester
         if ($value instanceof sfForm && $value->isBound())
         {
           $this->form = $value;
-          break;
+          $this->forms[$name] = $value;
         }
       }
     }
+  }
+
+  /**
+   * Begins a block.
+   *
+   * @return sfTester This sfTester instance
+   */
+  public function begin($name = null)
+  {
+    if (null !== $name) {
+      if (!isset($this->forms[$name])) {
+        throw new LogicException(__METHOD__.": form with name `{$name}` not found");
+      }
+      $this->form = $this->forms[$name];
+    }
+
+    return parent::begin();
   }
 
   /**
