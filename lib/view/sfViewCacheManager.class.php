@@ -513,7 +513,7 @@ class sfViewCacheManager
   protected function ignore()
   {
     // ignore cache parameter? (only available in debug mode)
-    if (sfConfig::get('sf_debug') && $this->context->getRequest()->getAttribute('sf_ignore_cache'))
+    if (sfConfig::get('sf_ignore_cache') || (sfConfig::get('sf_debug') && $this->context->getRequest()->getAttribute('sf_ignore_cache')))
     {
       if (sfConfig::get('sf_logging_enabled'))
       {
@@ -536,7 +536,7 @@ class sfViewCacheManager
    */
   public function set($data, $internalUri)
   {
-    if (!$this->isCacheable($internalUri))
+    if (!$this->isCacheable($internalUri) || $this->ignore())
     {
       return false;
     }
