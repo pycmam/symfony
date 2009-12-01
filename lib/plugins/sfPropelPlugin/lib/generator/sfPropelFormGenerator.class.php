@@ -16,7 +16,7 @@
  * @package    symfony
  * @subpackage generator
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfPropelFormGenerator.class.php 23307 2009-10-24 14:38:02Z Kris.Wallsmith $
+ * @version    SVN: $Id: sfPropelFormGenerator.class.php 24392 2009-11-25 18:35:39Z FabianLange $
  */
 class sfPropelFormGenerator extends sfGenerator
 {
@@ -81,7 +81,7 @@ class sfPropelFormGenerator extends sfGenerator
     foreach ($this->dbMap->getTables() as $tableName => $table)
     {
       $behaviors = $table->getBehaviors();
-      if (isset($behaviors['symfony']['form']) && 'false' == $behaviors['symfony']['form'])
+      if (isset($behaviors['symfony']['form']) && 'false' === $behaviors['symfony']['form'])
       {
         continue;
       }
@@ -387,11 +387,6 @@ class sfPropelFormGenerator extends sfGenerator
     if (!$column->isNotNull() || $column->isPrimaryKey())
     {
       $options[] = '\'required\' => false';
-    }
-
-    if (null !== $column->getDefaultValue())
-    {
-      $options[] = sprintf('\'empty_value\' => \'%s\'', $column->getDefaultValue());
     }
 
     return count($options) ? sprintf('array(%s)', implode(', ', $options)) : '';

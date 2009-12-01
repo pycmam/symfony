@@ -14,59 +14,23 @@
  * @package    symfony
  * @subpackage task
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfAssetsUpgrade.class.php 23810 2009-11-12 11:07:44Z Kris.Wallsmith $
+ * @version    SVN: $Id: sfAssetsUpgrade.class.php 24395 2009-11-25 19:02:18Z Kris.Wallsmith $
  */
 class sfAssetsUpgrade extends sfUpgrade
 {
   public function upgrade()
   {
-    // remove the common filter from all filters.yml configuration file
-    $dirs = $this->getProjectConfigDirectories();
-    foreach ($dirs as $dir)
+    $replace = 'common:'.PHP_EOL.'  class: sfCommonFilter';
+    foreach (glob(sfConfig::get('sf_apps_dir').'/*/config/filters.yml') as $file)
     {
-      if (!file_exists($file = $dir.'/filters.yml'))
+      $original = file_get_contents($file);
+      $modified = preg_replace('/^common: +~/m', $replace, $original, -1, $count);
+
+      if ($count)
       {
-        continue;
+        $this->logSection('file+', $file);
+        file_put_contents($file, $modified);
       }
-
-      $content = preg_replace("#^common\:\s+~#m", '', file_get_contents($file), -1, $count);
-      if (!$count)
-      {
-        continue;
-      }
-
-      $this->logSection('filters', sprintf('Migrating %s', $file));
-      file_put_contents($file, $content);
-    }
-
-    // add calls to replacing helpers in all layouts
-    $finder = $this->getFinder('file')->name('*.php');
-    $dirs = glob(sfConfig::get('sf_apps_dir').'/*/templates');
-    foreach ($finder->in($dirs) as $file)
-    {
-      $content = file_get_contents($file);
-
-      if (preg_match('/include_(stylesheets|javascripts)\(\)/', $content))
-      {
-        continue;
-      }
-
-      if (false === ($pos = strpos($content, '</head>')))
-      {
-        continue;
-      }
-
-      $code = <<<EOF
-
-    <?php include_stylesheets() ?>
-    <?php include_javascripts() ?>
-
-EOF;
-
-      $content = substr($content, 0, $pos).$code.substr($content, $pos);
-
-      $this->logSection('layout', sprintf('Migrating %s', $file));
-      file_put_contents($file, $content);
     }
   }
 }

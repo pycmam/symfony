@@ -14,7 +14,7 @@
  * @package    symfony
  * @subpackage config
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfApplicationConfiguration.class.php 24007 2009-11-16 12:37:29Z Kris.Wallsmith $
+ * @version    SVN: $Id: sfApplicationConfiguration.class.php 24037 2009-11-16 17:35:09Z Kris.Wallsmith $
  */
 abstract class sfApplicationConfiguration extends ProjectConfiguration
 {
@@ -27,7 +27,8 @@ abstract class sfApplicationConfiguration extends ProjectConfiguration
     $application = null,
     $environment = null,
     $debug       = false,
-    $config      = array();
+    $config      = array(),
+    $cache       = null;
 
   /**
    * Constructor.
@@ -90,7 +91,7 @@ abstract class sfApplicationConfiguration extends ProjectConfiguration
   }
 
   /**
-   * @see sfProjectConfiguration
+   * Various initializations.
    */
   public function initConfiguration()
   {
@@ -103,7 +104,7 @@ abstract class sfApplicationConfiguration extends ProjectConfiguration
     }
 
     // required core classes for the framework
-    if (!sfConfig::get('sf_debug') && !sfConfig::get('sf_test') && !self::$coreLoaded)
+    if (!$this->isDebug() && !sfConfig::get('sf_test') && !self::$coreLoaded)
     {
       $configCache->import('config/core_compile.yml', false);
     }
@@ -341,17 +342,20 @@ abstract class sfApplicationConfiguration extends ProjectConfiguration
     {
       $dirs = array();
 
-      $dirs[sfConfig::get('sf_app_module_dir').'/'.$moduleName.'/actions'] = false;  // application
+      $dirs[sfConfig::get('sf_app_module_dir').'/'.$moduleName.'/actions'] = false; // application
 
       foreach ($this->getPluginPaths() as $path)
       {
         if (is_dir($dir = $path.'/modules/'.$moduleName.'/actions'))
         {
-          $dirs[$dir] = true;                                                        // plugins
+          $dirs[$dir] = true; // plugins
         }
       }
 
-      $dirs[$this->getSymfonyLibDir().'/controller/'.$moduleName.'/actions'] = true; // core modules
+      if (is_dir($dir = $this->getSymfonyLibDir().'/controller/'.$moduleName.'/actions'))
+      {
+        $dirs[$dir] = true; // core modules
+      }
 
       $this->cache['getControllerDirs'][$moduleName] = $dirs;
     }
@@ -465,6 +469,18 @@ abstract class sfApplicationConfiguration extends ProjectConfiguration
     $dir = $this->getTemplateDir($moduleName, $templateFile);
 
     return $dir ? $dir.'/'.$templateFile : null;
+  }
+  /**
+   * @see sfProjectConfiguration
+   */
+  public function getPluginPaths()
+  {
+    if (!isset($this->cache['getPluginPaths']))
+    {
+      $this->cache['getPluginPaths'] = parent::getPluginPaths();
+    }
+
+    return $this->cache['getPluginPaths'];
   }
 
   /**
@@ -604,7 +620,6 @@ abstract class sfApplicationConfiguration extends ProjectConfiguration
    */
   public function loadHelpers($helpers, $moduleName = '')
   {
-    $dirs = $this->getHelperDirs($moduleName);
     foreach ((array) $helpers as $helperName)
     {
       if (isset(self::$loadedHelpers[$helperName]))
@@ -612,27 +627,48 @@ abstract class sfApplicationConfiguration extends ProjectConfiguration
         continue;
       }
 
-      $fileName = $helperName.'Helper.php';
-      foreach ($dirs as $dir)
+      if (isset($this->cache['loadedHelpers'][$moduleName][$helperName]))
       {
-        $included = false;
-        if (is_readable($dir.'/'.$fileName))
-        {
-          include_once($dir.'/'.$fileName);
-          $included = true;
-          break;
-        }
+        include_once $this->cache['loadedHelpers'][$moduleName][$helperName];
       }
-
-      if (!$included)
+      else if (isset($this->cache['loadedHelpers'][''][$helperName]))
       {
-        // search in the include path
-        if ((@include_once('helper/'.$fileName)) != 1)
-        {
-          $dirs = array_merge($dirs, explode(PATH_SEPARATOR, get_include_path()));
-          $dirs = array_map(array('sfDebug', 'shortenFilePath'), $dirs);
+        include_once $this->cache['loadedHelpers'][''][$helperName];
+      }
+      else
+      {
+        $fileName = $helperName.'Helper.php';
 
-          throw new InvalidArgumentException(sprintf('Unable to load "%sHelper.php" helper in: %s.', $helperName, implode(', ', $dirs)));
+        if (!isset($dirs))
+        {
+          $dirs = $this->getHelperDirs($moduleName);
+        }
+
+        foreach ($dirs as $dir)
+        {
+          $included = false;
+          if (is_readable($dir.'/'.$fileName))
+          {
+            include_once $dir.'/'.$fileName;
+            $included = true;
+            break;
+          }
+        }
+
+        if (!$included)
+        {
+          // search in the include path
+          if ((@include_once('helper/'.$fileName)) != 1)
+          {
+            $dirs = array_merge($dirs, explode(PATH_SEPARATOR, get_include_path()));
+            $dirs = array_map(array('sfDebug', 'shortenFilePath'), $dirs);
+
+            throw new InvalidArgumentException(sprintf('Unable to load "%sHelper.php" helper in: %s.', $helperName, implode(', ', $dirs)));
+          }
+          else
+          {
+            $this->dispatcher->notify(new sfEvent($this, 'application.log', array('Loading of helpers via the include path has been deprecated.', 'priority' => sfLogger::NOTICE)));
+          }
         }
       }
 

@@ -17,7 +17,7 @@
  * @subpackage filter
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
  * @author     Sean Kerr <sean@code-box.org>
- * @version    SVN: $Id: sfValidationExecutionFilter.class.php 20546 2009-07-28 07:13:31Z fabien $
+ * @version    SVN: $Id: sfValidationExecutionFilter.class.php 24615 2009-11-30 22:30:46Z Kris.Wallsmith $
  */
 class sfValidationExecutionFilter extends sfFilter
 {
@@ -64,7 +64,7 @@ class sfValidationExecutionFilter extends sfFilter
     $filterChain->execute();
   }
 
-  /*
+  /**
    * Handles the action.
    *
    * @param  sfFilterChain The current filter chain
@@ -74,12 +74,14 @@ class sfValidationExecutionFilter extends sfFilter
    */
   protected function handleAction($filterChain, $actionInstance)
   {
-    $uri = $this->context->getRouting()->getCurrentInternalUri();
-
-    if (sfConfig::get('sf_cache') && !is_null($uri) && $this->context->getViewCacheManager()->hasActionCache($uri))
+    if (sfConfig::get('sf_cache'))
     {
-      // action in cache, so go to the view
-      return sfView::SUCCESS;
+      $uri = $this->context->getViewCacheManager()->getCurrentCacheKey();
+      if (null !== $uri && $this->context->getViewCacheManager()->hasActionCache($uri))
+      {
+        // action in cache, so go to the view
+        return sfView::SUCCESS;
+      }
     }
 
     return $this->validateAction($filterChain, $actionInstance) ? $this->executeAction($actionInstance) : $this->handleErrorAction($actionInstance);

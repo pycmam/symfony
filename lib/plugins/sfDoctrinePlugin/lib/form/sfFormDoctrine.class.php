@@ -18,7 +18,7 @@
  * @subpackage form
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
  * @author     Jonathan H. Wage <jonwage@gmail.com>
- * @version    SVN: $Id: sfFormDoctrine.class.php 23977 2009-11-15 17:28:16Z fabien $
+ * @version    SVN: $Id: sfFormDoctrine.class.php 24537 2009-11-30 05:06:09Z Kris.Wallsmith $
  */
 abstract class sfFormDoctrine extends sfFormObject
 {
@@ -96,9 +96,9 @@ abstract class sfFormDoctrine extends sfFormObject
    *
    *     [php]
    *     $userForm = new UserForm($user);
-   *     $userForm->embedRelation('Groups');
+   *     $userForm->embedRelation('Groups AS groups');
    *
-   * @param  string $relationName  The name of the relation
+   * @param  string $relationName  The name of the relation and an optional alias
    * @param  string $formClass     The name of the form class to use
    * @param  array  $formArguments Arguments to pass to the constructor (related object will be shifted onto the front)
    *
@@ -106,25 +106,38 @@ abstract class sfFormDoctrine extends sfFormObject
    */
   public function embedRelation($relationName, $formClass = null, $formArgs = array())
   {
-    $relation = $this->getObject()->getTable()->getRelation($relationName);
-
-    if ($relation->getType() !== Doctrine_Relation::MANY)
+    if (false !== $pos = stripos($relationName, ' as '))
     {
-      throw new InvalidArgumentException('You can only embed a relationship that is a collection.');
+      $fieldName = substr($relationName, $pos + 4);
+      $relationName = substr($relationName, 0, $pos);
     }
+    else
+    {
+      $fieldName = $relationName;
+    }
+
+    $relation = $this->getObject()->getTable()->getRelation($relationName);
 
     $r = new ReflectionClass(null === $formClass ? $relation->getClass().'Form' : $formClass);
 
-    $subForm = new sfForm();
-    foreach ($this->getObject()->$relationName as $index => $childObject)
+    if (Doctrine_Relation::ONE == $relation->getType())
     {
-      $form = $r->newInstanceArgs(array_merge(array($childObject), $formArgs));
-
-      $subForm->embedForm($index, $form);
-      $subForm->getWidgetSchema()->setLabel($index, (string) $childObject);
+      $this->embedForm($fieldName, $r->newInstanceArgs(array_merge(array($this->getObject()->$relationName), $formArgs)));
     }
+    else
+    {
+      $subForm = new sfForm();
 
-    $this->embedForm($relationName, $subForm);
+      foreach ($this->getObject()->$relationName as $index => $childObject)
+      {
+        $form = $r->newInstanceArgs(array_merge(array($childObject), $formArgs));
+
+        $subForm->embedForm($index, $form);
+        $subForm->getWidgetSchema()->setLabel($index, (string) $childObject);
+      }
+
+      $this->embedForm($fieldName, $subForm);
+    }
   }
 
   /**
@@ -266,9 +279,11 @@ abstract class sfFormDoctrine extends sfFormObject
 
     if (!$values[$field])
     {
+      // this is needed if the form is embedded, in which case
+      // the parent form has already changed the value of the field
       $oldValues = $this->getObject()->getModified(true, false);
 
-      return isset($oldValues[$field]) ? $oldValues[$field] : '';
+      return isset($oldValues[$field]) ? $oldValues[$field] : $this->object->$field;
     }
 
     // we need the base directory
@@ -321,14 +336,23 @@ abstract class sfFormDoctrine extends sfFormObject
       $file = $this->getValue($field);
     }
 
-    $method = sprintf('generate%sFilename', $field);
+    $method = sprintf('generate%sFilename', $this->camelize($field));
 
     if (null !== $filename)
     {
       return $file->save($filename);
     }
+    else if (method_exists($this, $method))
+    {
+      return $file->save($this->$method($file));
+    }
     else if (method_exists($this->getObject(), $method))
     {
+      return $file->save($this->getObject()->$method($file));
+    }
+    else if (method_exists($this->getObject(), $method = sprintf('generate%sFilename', $field)))
+    {
+      // this non-camelized method name has been deprecated
       return $file->save($this->getObject()->$method($file));
     }
     else

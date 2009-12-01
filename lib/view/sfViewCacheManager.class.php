@@ -18,7 +18,7 @@
  * @package    symfony
  * @subpackage view
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfViewCacheManager.class.php 23810 2009-11-12 11:07:44Z Kris.Wallsmith $
+ * @version    SVN: $Id: sfViewCacheManager.class.php 24615 2009-11-30 22:30:46Z Kris.Wallsmith $
  */
 class sfViewCacheManager
 {
@@ -196,16 +196,13 @@ class sfViewCacheManager
 
       sort($varyHeaders);
       $request = $this->context->getRequest();
-      $vary = '';
+      $varys = array();
 
       foreach ($varyHeaders as $header)
       {
-        $value = $request->getHttpHeader($header);
-        $value = preg_replace('/[^a-z0-9\*]/i', '_', $value);
-        $value = preg_replace('/_+/', '_', $value);
-
-        $vary .= $value.'|';
+        $varys[] = $header . '-' . preg_replace('/\W+/', '_', $request->getHttpHeader($header));
       }
+      $vary = implode($varys, '-');
     }
 
     return $vary;
@@ -947,6 +944,27 @@ class sfViewCacheManager
     }
 
     return true;
+  }
+
+  /**
+   * Returns the current request's cache key.
+   *
+   * This cache key is calculated based on the routing factory's current URI
+   * and any GET parameters from the current request factory.
+   *
+   * @return string The cache key for the current request
+   */
+  public function getCurrentCacheKey()
+  {
+    $cacheKey = $this->routing->getCurrentInternalUri();
+
+    if ($getParameters = $this->request->getGetParameters())
+    {
+      $cacheKey .= false === strpos($cacheKey, '?') ? '?' : '&';
+      $cacheKey .= http_build_query($getParameters, null, '&');
+    }
+
+    return $cacheKey;
   }
 
   /**

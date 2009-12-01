@@ -16,7 +16,7 @@
  * @subpackage doctrine
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
  * @author     Jonathan H. Wage <jonwage@gmail.com>
- * @version    SVN: $Id: sfDoctrineDatabase.class.php 23810 2009-11-12 11:07:44Z Kris.Wallsmith $
+ * @version    SVN: $Id: sfDoctrineDatabase.class.php 24598 2009-11-30 19:59:04Z Jonathan.Wage $
  */
 class sfDoctrineDatabase extends sfDatabase
 {
@@ -83,7 +83,8 @@ class sfDoctrineDatabase extends sfDatabase
 
       if (is_string($value))
       {
-        $value = constant('Doctrine_Core::'.strtoupper($stringName).'_'.strtoupper($value));
+        $valueConstantName = 'Doctrine_Core::'.strtoupper($stringName).'_'.strtoupper($value);
+        $value = defined($valueConstantName) ? constant($valueConstantName) : $value;
       }
 
       $this->_doctrineConnection->setAttribute($name, $value);
@@ -99,7 +100,7 @@ class sfDoctrineDatabase extends sfDatabase
       $this->profiler = new sfDoctrineConnectionProfiler($dispatcher, array(
         'logging' => $this->getParameter('logging', sfConfig::get('sf_logging_enabled')),
       ));
-      $this->_doctrineConnection->addListener($this->profiler);
+      $this->_doctrineConnection->addListener($this->profiler, 'symfony_profiler');
     }
 
     // Invoke the configuration methods for the connection if they exist (deprecated in favor of the "doctrine.configure_connection" event)

@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: NestedSet.php 6692 2009-11-10 17:01:33Z jwage $
+ *  $Id: NestedSet.php 6799 2009-11-24 19:24:33Z jwage $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -27,7 +27,7 @@
  * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
  * @link        www.phpdoctrine.org
  * @since       1.0
- * @version     $Revision: 6692 $
+ * @version     $Revision: 6799 $
  * @author      Joe Simms <joe.simms@websites4.com>
  * @author      Roman Borschel <roman@code-factory.org>
  */
@@ -285,8 +285,9 @@ class Doctrine_Tree_NestedSet extends Doctrine_Tree implements Doctrine_Tree_Int
     private function _createBaseQuery()
     {
         $this->_baseAlias = "base";
-        $q = new Doctrine_Query();
-        $q->select($this->_baseAlias . ".*")->from($this->getBaseComponent() . " " . $this->_baseAlias);
+        $q = Doctrine_Core::getTable($this->getBaseComponent())
+            ->createQuery($this->_baseAlias)
+            ->select($this->_baseAlias . '.*');
         return $q;
     }
 
