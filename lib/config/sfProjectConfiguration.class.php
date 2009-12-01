@@ -14,7 +14,7 @@
  * @package    symfony
  * @subpackage config
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfProjectConfiguration.class.php 24014 2009-11-16 13:30:53Z Kris.Wallsmith $
+ * @version    SVN: $Id: sfProjectConfiguration.class.php 24032 2009-11-16 17:10:08Z Kris.Wallsmith $
  */
 class sfProjectConfiguration
 {
@@ -25,8 +25,7 @@ class sfProjectConfiguration
     $pluginPaths           = array(),
     $overriddenPluginPaths = array(),
     $pluginConfigurations  = array(),
-    $pluginsLoaded         = false,
-    $cache                 = null;
+    $pluginsLoaded         = false;
 
   static protected
     $active = null;
@@ -444,29 +443,25 @@ class sfProjectConfiguration
    */
   public function getPluginPaths()
   {
-    if (!isset($this->cache['getPluginPaths']))
+    if (!isset($this->pluginPaths['']))
     {
-      if (!isset($this->pluginPaths['']))
-      {
-        $pluginPaths = $this->getAllPluginPaths();
+      $pluginPaths = $this->getAllPluginPaths();
 
-        $this->pluginPaths[''] = array();
-        foreach ($this->getPlugins() as $plugin)
+      $this->pluginPaths[''] = array();
+      foreach ($this->getPlugins() as $plugin)
+      {
+        if (isset($pluginPaths[$plugin]))
         {
-          if (isset($pluginPaths[$plugin]))
-          {
-            $this->pluginPaths[''][] = $pluginPaths[$plugin];
-          }
-          else
-          {
-            throw new InvalidArgumentException(sprintf('The plugin "%s" does not exist.', $plugin));
-          }
+          $this->pluginPaths[''][] = $pluginPaths[$plugin];
+        }
+        else
+        {
+          throw new InvalidArgumentException(sprintf('The plugin "%s" does not exist.', $plugin));
         }
       }
-
-      $this->cache['getPluginPaths'] = $this->pluginPaths[''];
     }
-    return $this->cache['getPluginPaths'];
+
+    return $this->pluginPaths[''];
   }
 
   /**

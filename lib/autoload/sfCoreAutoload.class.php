@@ -22,7 +22,7 @@ define('SYMFONY_VERSION', '1.3.0-DEV');
  * @package    symfony
  * @subpackage autoload
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfCoreAutoload.class.php 23994 2009-11-15 22:55:24Z bschussek $
+ * @version    SVN: $Id: sfCoreAutoload.class.php 24470 2009-11-27 15:14:06Z fabien $
  */
 class sfCoreAutoload
 {
@@ -281,6 +281,7 @@ class sfCoreAutoload
     'sfviewexception' => 'exception/sfViewException.class.php',
     'sfbasicsecurityfilter' => 'filter/sfBasicSecurityFilter.class.php',
     'sfcachefilter' => 'filter/sfCacheFilter.class.php',
+    'sfcommonfilter' => 'filter/sfCommonFilter.class.php',
     'sfexecutionfilter' => 'filter/sfExecutionFilter.class.php',
     'sffilter' => 'filter/sfFilter.class.php',
     'sffilterchain' => 'filter/sfFilterChain.class.php',
@@ -412,6 +413,14 @@ class sfCoreAutoload
     'sftestsupgrade' => 'task/project/upgrade1.3/sfTestsUpgrade.class.php',
     'sfupgrade' => 'task/project/upgrade1.3/sfUpgrade.class.php',
     'sfyamlupgrade' => 'task/project/upgrade1.3/sfYamlUpgrade.class.php',
+    'sfdeprecatedclassesvalidation' => 'task/project/validation/sfDeprecatedClassesValidation.class.php',
+    'sfdeprecatedconfigurationfilesvalidation' => 'task/project/validation/sfDeprecatedConfigurationFilesValidation.class.php',
+    'sfdeprecatedhelpersvalidation' => 'task/project/validation/sfDeprecatedHelpersValidation.class.php',
+    'sfdeprecatedmethodsvalidation' => 'task/project/validation/sfDeprecatedMethodsValidation.class.php',
+    'sfdeprecatedpluginsvalidation' => 'task/project/validation/sfDeprecatedPluginsValidation.class.php',
+    'sfdeprecatedsettingsvalidation' => 'task/project/validation/sfDeprecatedSettingsValidation.class.php',
+    'sfparameterholdervalidation' => 'task/project/validation/sfParameterHolderValidation.class.php',
+    'sfvalidation' => 'task/project/validation/sfValidation.class.php',
     'sfbasetask' => 'task/sfBaseTask.class.php',
     'sfcommandapplicationtask' => 'task/sfCommandApplicationTask.class.php',
     'sffilesystem' => 'task/sfFilesystem.class.php',

@@ -16,7 +16,7 @@
  * @package    symfony
  * @subpackage form
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfFormPropel.class.php 23967 2009-11-15 13:45:31Z FabianLange $
+ * @version    SVN: $Id: sfFormPropel.class.php 24068 2009-11-17 06:39:35Z Kris.Wallsmith $
  */
 abstract class sfFormPropel extends sfFormObject
 {
@@ -294,6 +294,10 @@ abstract class sfFormPropel extends sfFormObject
     if (null !== $filename)
     {
       return $file->save($filename);
+    }
+    else if (method_exists($this, $method))
+    {
+      return $file->save($this->$method($file));
     }
     else if (method_exists($this->getObject(), $method))
     {

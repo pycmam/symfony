@@ -35,7 +35,7 @@ class Doctrine_Core
     /**
      * VERSION
      */
-    const VERSION                   = '1.2.0-BETA2';
+    const VERSION                   = '1.2.0';
 
     /**
      * ERROR CONSTANTS
@@ -207,6 +207,7 @@ class Doctrine_Core
     const ATTR_COLLECTION_CLASS             = 175;
     const ATTR_TABLE_CLASS                  = 176;
     const ATTR_USE_NATIVE_SET               = 177;
+    const ATTR_MODEL_CLASS_PREFIX           = 178;
 
     /**
      * LIMIT CONSTANTS
@@ -622,12 +623,14 @@ class Doctrine_Core
     {
         $manager = Doctrine_Manager::getInstance();
 
-        $modelLoading = $modelLoading === null ? $manager->getAttribute(Doctrine_Core::ATTR_MODEL_LOADING):$modelLoading;
+        $modelLoading = $modelLoading === null ? $manager->getAttribute(Doctrine_Core::ATTR_MODEL_LOADING) : $modelLoading;
+        $classPrefix = $classPrefix === null ? $manager->getAttribute(Doctrine_Core::ATTR_MODEL_CLASS_PREFIX) : $classPrefix;
 
         $loadedModels = array();
 
         if ($directory !== null) {
             foreach ((array) $directory as $dir) {
+                $dir = rtrim($dir, '/');
                 if ( ! is_dir($dir)) {
                     throw new Doctrine_Exception('You must pass a valid path to a directory containing Doctrine models');
                 }
@@ -639,14 +642,20 @@ class Doctrine_Core
                     $e = explode('.', $file->getFileName());
                     
                     if (end($e) === 'php' && strpos($file->getFileName(), '.inc') === false) {
-                        $className = $e[0];
+                        if ($modelLoading == Doctrine_Core::MODEL_LOADING_PEAR) {
+                            $className = str_replace($dir . DIRECTORY_SEPARATOR, null, $file->getPathName());
+                            $className = str_replace(DIRECTORY_SEPARATOR, '_', $className);
+                            $className = substr($className, 0, strpos($className, '.'));
+                        } else {
+                            $className = $e[0];
+                        }
 
                         if ($classPrefix) {
                             $className = $classPrefix . $className;
                         }
 
                         if ( ! class_exists($className, false)) {
-                            if ($modelLoading == Doctrine_Core::MODEL_LOADING_CONSERVATIVE) {
+                            if ($modelLoading == Doctrine_Core::MODEL_LOADING_CONSERVATIVE || $modelLoading == Doctrine_Core::MODEL_LOADING_PEAR) {
                                 self::loadModel($className, $file->getPathName());
 
                                 $loadedModels[$className] = $className;
@@ -675,7 +684,7 @@ class Doctrine_Core
                                     $loadedModels = array_merge($loadedModels, $previouslyLoaded);
                                 }
                             }
-                        } else {
+                        } else if (self::isValidModelClass($className)) {
                             $loadedModels[$className] = $className;
                         }
                     }
@@ -846,7 +855,7 @@ class Doctrine_Core
 
         $export = new Doctrine_Export_Schema();
 
-        $result = $export->exportSchema($yamlPath, 'yml', $directory);
+        $result = $export->exportSchema($yamlPath, 'yml', $directory, array(), Doctrine_Core::MODEL_LOADING_AGGRESSIVE);
 
         Doctrine_Lib::removeDirectories($directory);
 
@@ -1095,6 +1104,10 @@ class Doctrine_Core
      */
     public static function autoload($className)
     {
+        if (strpos($className, 'sfYaml') === 0) {
+            require dirname(__FILE__) . '/Parser/sfYaml/' . $className . '.php';
+        }
+
         if (0 !== stripos($className, 'Doctrine_') || class_exists($className, false) || interface_exists($className, false)) {
             return false;
         }

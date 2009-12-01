@@ -16,7 +16,7 @@
  * @subpackage controller
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
  * @author     Sean Kerr <sean@code-box.org>
- * @version    SVN: $Id: sfController.class.php 24007 2009-11-16 12:37:29Z Kris.Wallsmith $
+ * @version    SVN: $Id: sfController.class.php 24265 2009-11-23 11:55:33Z Kris.Wallsmith $
  */
 abstract class sfController
 {
@@ -165,7 +165,6 @@ abstract class sfController
    * @throws sfForwardException        If an error occurs while forwarding the request
    * @throws sfError404Exception       If the action not exist
    * @throws sfInitializationException If the action could not be initialized
-   * @throws sfSecurityException       If the action requires security but the user implementation is not of type sfSecurityUser
    */
   public function forward($moduleName, $actionName)
   {

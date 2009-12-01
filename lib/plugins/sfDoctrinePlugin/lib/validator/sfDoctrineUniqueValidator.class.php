@@ -27,7 +27,7 @@
  * @subpackage doctrine
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
  * @author     Jonathan H. Wage <jonwage@gmail.com>
- * @version    SVN: $Id: sfDoctrineUniqueValidator.class.php 23810 2009-11-12 11:07:44Z Kris.Wallsmith $
+ * @version    SVN: $Id: sfDoctrineUniqueValidator.class.php 24575 2009-11-30 12:15:42Z fabien $
  */
 class sfDoctrineUniqueValidator extends sfValidator
 {
@@ -52,7 +52,7 @@ class sfDoctrineUniqueValidator extends sfValidator
     // implied assumption: the is at least one primary key
     foreach ($primaryKeys as $primaryKey)
     {
-      if (null === $primaryKeyValue = $this->getContext(->getRequest()->getParameter($primaryKey)))
+      if (null === $primaryKeyValue = $this->getContext()->getRequest()->getParameter($primaryKey))
       {
         break;
       }
