@@ -87,7 +87,7 @@ class sfYamlInline
         return is_string($value) ? "'$value'" : (int) $value;
       case is_numeric($value):
         return is_infinite($value) ? str_ireplace('INF', '.Inf', strval($value)) : (is_string($value) ? "'$value'" : $value);
-      case false !== strpos($value, "\n"):
+      case false !== strpos($value, "\n") || false !== strpos($value, "\r"):
         return sprintf('"%s"', str_replace(array('"', "\n", "\r"), array('\\"', '\n', '\r'), $value));
       case preg_match('/[ \s \' " \: \{ \} \[ \] , & \* \#] | \A[ - ? | < > = ! % @ ]/x', $value):
         return sprintf("'%s'", str_replace('\'', '\'\'', $value));
@@ -199,14 +199,17 @@ class sfYamlInline
    */
   static protected function parseQuotedScalar($scalar, &$i)
   {
-    preg_match('/'.self::REGEX_QUOTED_STRING.'/A', substr($scalar, $i), $match);
+    if (!preg_match('/'.self::REGEX_QUOTED_STRING.'/A', substr($scalar, $i), $match))
+    {
+      throw new InvalidArgumentException(sprintf('Malformed inline YAML string (%s).', substr($scalar, $i)));
+    }
 
-    $output = stripcslashes(substr($match[0], 1, strlen($match[0]) - 2));
+    $output = substr($match[0], 1, strlen($match[0]) - 2);
 
     if ('"' == $scalar[$i])
     {
       // evaluate the string
-      $output = str_replace(array('\\n', '\\r'), array("\n", "\r"), $output);
+      $output = str_replace(array('\\"', '\\n', '\\r'), array('"', "\n", "\r"), $output);
     }
     else
     {
