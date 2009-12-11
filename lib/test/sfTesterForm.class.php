@@ -52,15 +52,7 @@ class sfTesterForm extends sfTester
     if (!$this->forms)
     {
       $action = $this->browser->getContext()->getActionStack()->getLastEntry()->getActionInstance();
-
-      foreach ($action->getVarHolder()->getAll() as $name => $value)
-      {
-        if ($value instanceof sfForm && $value->isBound())
-        {
-          $this->form = $value;
-          $this->forms[$name] = $value;
-        }
-      }
+      $this->_extractForms($action->getVarHolder()->getAll());
     }
   }
 
@@ -86,8 +78,11 @@ class sfTesterForm extends sfTester
    *
    * @return sfForm The current sfForm form instance
    */
-  public function getForm()
+  public function getForm($name = null)
   {
+    if (null !== $name && isset($this->forms[$name])) {
+      return $this->forms[$name];
+    }
     return $this->form;
   }
 
@@ -233,14 +228,7 @@ class sfTesterForm extends sfTester
 
     if ('action' == $parameters['sf_type'])
     {
-      foreach ($parameters as $key => $value)
-      {
-        if ($value instanceof sfForm && $value->isBound())
-        {
-          $this->form = $value;
-          break;
-        }
-      }
+      $this->_extractForms($parameters);
     }
 
     return $parameters;
@@ -250,7 +238,6 @@ class sfTesterForm extends sfTester
    * @param string $path
    * @return sfFormField
    */
-
   public function getFormField($path)
   {
     if (false !== $pos = strpos($path, '['))
@@ -272,4 +259,24 @@ class sfTesterForm extends sfTester
 
     return $field;
   }
+
+
+    /**
+     * Extract forms from array of vars
+     *
+     * @param  array $data
+     * @return void
+     */
+    private function _extractForms(array $data)
+    {
+        foreach ($data as $name => $value) {
+            if ($value instanceof sfForm) {
+                $this->forms[$name] = $value;
+                if ($value->isBound()) {
+                    $this->form = $value;
+                }
+            }
+        }
+    }
+
 }
