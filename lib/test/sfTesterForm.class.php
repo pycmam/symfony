@@ -262,6 +262,25 @@ class sfTesterForm extends sfTester
 
 
     /**
+     * Assert form class
+     *
+     * @param  string $expectedClass
+     * @return void
+     */
+    public function isInstanceOf($expectedClass)
+    {
+        if (null === $this->form) {
+          throw new LogicException('no form has been found.');
+        }
+
+        $actualClass = get_class($this->form);
+        $this->tester->is($expectedClass, $actualClass, "Expected form is instance of `{$expectedClass}`, got `{$actualClass}`");
+
+        return $this->getObjectToReturn();
+    }
+
+
+    /**
      * Extract forms from array of vars
      *
      * @param  array $data
