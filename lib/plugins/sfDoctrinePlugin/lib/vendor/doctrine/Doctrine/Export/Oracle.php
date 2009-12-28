@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: Oracle.php 6896 2009-12-07 23:01:19Z adrive $
+ *  $Id: Oracle.php 6946 2009-12-14 20:06:51Z adrive $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -29,7 +29,7 @@
  * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
  * @link        www.phpdoctrine.org
  * @since       1.0
- * @version     $Revision: 6896 $
+ * @version     $Revision: 6946 $
  */
 class Doctrine_Export_Oracle extends Doctrine_Export
 {
@@ -153,7 +153,7 @@ BEGIN
    ELSE
       SELECT NVL(Last_Number, 0) INTO last_Sequence
         FROM User_Sequences
-       WHERE Sequence_Name = \'' . $sequenceName . '\';
+       WHERE UPPER(Sequence_Name) = UPPER(\'' . $sequenceName . '\');
       SELECT :NEW.' . $name . ' INTO last_InsertID FROM DUAL;
       WHILE (last_InsertID > last_Sequence) LOOP
          SELECT ' . $this->conn->quoteIdentifier($sequenceName) . '.NEXTVAL INTO last_Sequence FROM DUAL;
