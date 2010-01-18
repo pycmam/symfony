@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: Builder.php 6820 2009-11-30 17:27:49Z jwage $
+ *  $Id: Builder.php 7021 2010-01-12 20:39:49Z lsmith $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -30,7 +30,7 @@
  * @link        www.phpdoctrine.org
  * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
  * @since       1.0
- * @version     $Revision: 6820 $
+ * @version     $Revision: 7021 $
  * @author      Konsta Vesterinen <kvesteri@cc.hut.fi>
  * @author      Jukka Hassinen <Jukka.Hassinen@BrainAlliance.com>
  * @author      Nicolas Bérard-Nault <nicobn@php.net>
@@ -646,7 +646,7 @@ class Doctrine_Import_Builder extends Doctrine_Builder
         $ret[] = '@package    ' . $this->_phpDocPackage;
         $ret[] = '@subpackage ' . $this->_phpDocSubpackage;
         $ret[] = '@author     ' . $this->_phpDocName . ' <' . $this->_phpDocEmail . '>';
-        $ret[] = '@version    SVN: $Id: Builder.php 6820 2009-11-30 17:27:49Z jwage $';
+        $ret[] = '@version    SVN: $Id: Builder.php 7021 2010-01-12 20:39:49Z lsmith $';
 
         $ret = ' * ' . implode(PHP_EOL . ' * ', $ret);
         $ret = ' ' . trim($ret);
@@ -725,7 +725,15 @@ class Doctrine_Import_Builder extends Doctrine_Builder
     {
         // rewrite special case of actAs: [Behavior] which gave [0] => Behavior
         if (is_array($actAs) && isset($actAs[0]) && !is_array($actAs[0])) {
-            $actAs = array_flip($actAs);
+            $tmp = array();
+            foreach ($actAs as $key => $value) {
+                if (is_numeric($key)) {
+                    $tmp[(string)$value] = null;
+                } else {
+                    $tmp[$key] = $value;
+                }
+            }
+            $actAs = $tmp;
         }
 
         $build = '';
