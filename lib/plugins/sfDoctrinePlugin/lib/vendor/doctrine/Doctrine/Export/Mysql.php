@@ -271,15 +271,19 @@ class Doctrine_Export_Mysql extends Doctrine_Export
 
         $method = 'get' . $field['type'] . 'Declaration';
 
+        $after = !empty($field['after']) ? ' AFTER ' . $field['after'] : '';
+
         try {
             if (method_exists($this->conn->dataDict, $method)) {
-                return $this->conn->dataDict->$method($name, $field);
+                $dec = $this->conn->dataDict->$method($name, $field);
             } else {
                 $dec = $this->conn->dataDict->getNativeDeclaration($field);
-            }
-    
-            return $this->conn->quoteIdentifier($name, true) 
+                $dec = $this->conn->quoteIdentifier($name, true) 
                  . ' ' . $dec . $charset . $default . $notnull . $comment . $unique . $check . $collation;
+            }
+            $dec .= $after;
+            return $dec;
+
         } catch (Exception $e) {
             throw new Doctrine_Exception('Around field ' . $name . ': ' . $e->getMessage() . "\n\n" . $e->getTraceAsString() . "\n\n");
         }
