@@ -19,6 +19,7 @@
 class sfTesterForm extends sfTester
 {
   protected
+    $forms = array(),
     $form = null;
 
   /**
@@ -40,6 +41,7 @@ class sfTesterForm extends sfTester
   public function prepare()
   {
     $this->form = null;
+    $this->forms = array();
   }
 
   /**
@@ -47,19 +49,28 @@ class sfTesterForm extends sfTester
    */
   public function initialize()
   {
-    if (null === $this->form)
+    if (!$this->forms)
     {
       $action = $this->browser->getContext()->getActionStack()->getLastEntry()->getActionInstance();
-
-      foreach ($action->getVarHolder()->getAll() as $name => $value)
-      {
-        if ($value instanceof sfForm && $value->isBound())
-        {
-          $this->form = $value;
-          break;
-        }
-      }
+      $this->_extractForms($action->getVarHolder()->getAll());
     }
+  }
+
+  /**
+   * Begins a block.
+   *
+   * @return sfTester This sfTester instance
+   */
+  public function begin($name = null)
+  {
+    if (null !== $name) {
+      if (!isset($this->forms[$name])) {
+        throw new LogicException(__METHOD__.": form with name `{$name}` not found");
+      }
+      $this->form = $this->forms[$name];
+    }
+
+    return parent::begin();
   }
 
   /**
@@ -67,8 +78,11 @@ class sfTesterForm extends sfTester
    *
    * @return sfForm The current sfForm form instance
    */
-  public function getForm()
+  public function getForm($name = null)
   {
+    if (null !== $name && isset($this->forms[$name])) {
+      return $this->forms[$name];
+    }
     return $this->form;
   }
 
@@ -88,11 +102,11 @@ class sfTesterForm extends sfTester
 
     if (is_int($value))
     {
-      $this->tester->is(count($this->form->getErrorSchema()), $value, sprintf('the submitted form has "%s" errors.', $value));
+      $this->tester->is(count($this->form->getErrorSchema()), $value, sprintf("The submitted form has `%s` errors, got:\n%s", $value, $this->form->getErrorSchema()));
     }
     else
     {
-      $this->tester->is($this->form->hasErrors(), $value, sprintf('the submitted form %s.', ($value) ? 'has some errors' : 'is valid'));
+      $this->tester->is($this->form->hasErrors(), $value, sprintf("the submitted form %s, got:\n%s", ($value) ? 'has some errors' : 'is valid', $this->form->getErrorSchema()));
     }
 
     return $this->getObjectToReturn();
@@ -214,14 +228,7 @@ class sfTesterForm extends sfTester
 
     if ('action' == $parameters['sf_type'])
     {
-      foreach ($parameters as $key => $value)
-      {
-        if ($value instanceof sfForm && $value->isBound())
-        {
-          $this->form = $value;
-          break;
-        }
-      }
+      $this->_extractForms($parameters);
     }
 
     return $parameters;
@@ -231,7 +238,6 @@ class sfTesterForm extends sfTester
    * @param string $path
    * @return sfFormField
    */
-
   public function getFormField($path)
   {
     if (false !== $pos = strpos($path, '['))
@@ -253,4 +259,43 @@ class sfTesterForm extends sfTester
 
     return $field;
   }
+
+
+    /**
+     * Assert form class
+     *
+     * @param  string $expectedClass
+     * @return void
+     */
+    public function isInstanceOf($expectedClass)
+    {
+        if (null === $this->form) {
+          throw new LogicException('no form has been found.');
+        }
+
+        $actualClass = get_class($this->form);
+        $this->tester->is($expectedClass, $actualClass, "Expected form is instance of `{$expectedClass}`, got `{$actualClass}`");
+
+        return $this->getObjectToReturn();
+    }
+
+
+    /**
+     * Extract forms from array of vars
+     *
+     * @param  array $data
+     * @return void
+     */
+    private function _extractForms(array $data)
+    {
+        foreach ($data as $name => $value) {
+            if ($value instanceof sfForm) {
+                $this->forms[$name] = $value;
+                if ($value->isBound()) {
+                    $this->form = $value;
+                }
+            }
+        }
+    }
+
 }

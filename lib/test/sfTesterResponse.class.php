@@ -35,23 +35,26 @@ class sfTesterResponse extends sfTester
    */
   public function initialize()
   {
-    $this->response = $this->browser->getResponse();
+    $response = $this->browser->getResponse();
+    if (!$this->response || $this->response !== $response) {
 
-    $this->dom = null;
-    $this->domCssSelector = null;
-    if (preg_match('/(x|ht)ml/i', $this->response->getContentType(), $matches))
-    {
-      $this->dom = new DOMDocument('1.0', $this->response->getCharset());
-      $this->dom->validateOnParse = true;
-      if ('x' == $matches[1])
+      $this->response = $response;
+      $this->dom = null;
+      $this->domCssSelector = null;
+      if (preg_match('/(x|ht)ml/i', $this->response->getContentType(), $matches))
       {
-        @$this->dom->loadXML($this->response->getContent());
+        $this->dom = new DOMDocument('1.0', $this->response->getCharset());
+        $this->dom->validateOnParse = true;
+        if ('x' == $matches[1])
+        {
+          @$this->dom->loadXML($this->response->getContent());
+        }
+        else
+        {
+          @$this->dom->loadHTML($this->response->getContent());
+        }
+        $this->domCssSelector = new sfDomCssSelector($this->dom);
       }
-      else
-      {
-        @$this->dom->loadHTML($this->response->getContent());
-      }
-      $this->domCssSelector = new sfDomCssSelector($this->dom);
     }
   }
 

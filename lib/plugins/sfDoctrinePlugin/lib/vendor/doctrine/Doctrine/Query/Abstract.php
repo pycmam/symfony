@@ -789,7 +789,7 @@ abstract class Doctrine_Query_Abstract
      */
     public function getRootDeclaration()
     {
-        $map = $this->_queryComponents[$this->_rootAlias];
+        $map = $this->_queryComponents[$this->getRootAlias()];
         return $map;
     }
 
@@ -801,7 +801,7 @@ abstract class Doctrine_Query_Abstract
      */
     public function getRoot()
     {
-        $map = $this->_queryComponents[$this->_rootAlias];
+        $map = $this->_queryComponents[$this->getRootAlias()];
 
         if ( ! isset($map['table'])) {
             throw new Doctrine_Query_Exception('Root component not initialized.');

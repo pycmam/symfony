@@ -41,8 +41,7 @@ abstract class sfDoctrineRecord extends Doctrine_Record
       {
         $this->getTable()
           ->unshiftFilter(new sfDoctrineRecordI18nFilter())
-          ->setOption('has_symfony_i18n_filter', true)
-        ;
+          ->setOption('has_symfony_i18n_filter', true);
       }
     }
   }
