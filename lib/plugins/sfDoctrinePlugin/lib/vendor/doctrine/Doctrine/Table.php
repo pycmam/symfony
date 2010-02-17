@@ -2127,7 +2127,7 @@ class Doctrine_Table extends Doctrine_Configurable implements Countable
      */
     public function getColumnCount()
     {
-        return $this->columnCount;
+        return count($this->_columns);
     }
 
     /**
