@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: Record.php 6806 2009-11-24 21:30:38Z jwage $
+ *  $Id: Record.php 7275 2010-03-02 00:03:23Z jwage $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -29,7 +29,7 @@
  * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
  * @link        www.phpdoctrine.org
  * @since       1.0
- * @version     $Revision: 6806 $
+ * @version     $Revision: 7275 $
  */
 abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Countable, IteratorAggregate, Serializable
 {
@@ -2182,8 +2182,8 @@ abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Count
         if ($deep) {
             foreach ($this->_references as $key => $value) {
                 if ($value instanceof Doctrine_Collection) {
-                    foreach ($value as $record) {
-                        $ret->{$key}[] = $record->copy($deep);
+                    foreach ($value as $valueKey => $record) {
+                        $ret->{$key}[$valueKey] = $record->copy($deep);
                     }
                 } else if ($value instanceof Doctrine_Record) {
                     $ret->set($key, $value->copy($deep));
@@ -2496,9 +2496,9 @@ abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Count
 
             foreach ($records as $record) {
                 if ($this->$alias instanceof Doctrine_Record) {
-                    $this->$alias = $record;
+                    $this->set($alias, $record);
                 } else {
-                    $this[$alias]->add($record);
+                    $this->get($alias)->add($record);
                 }
             }
 
