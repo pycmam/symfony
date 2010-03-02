@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: Builder.php 7021 2010-01-12 20:39:49Z lsmith $
+ *  $Id: Builder.php 7284 2010-03-02 01:19:42Z jwage $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -30,7 +30,7 @@
  * @link        www.phpdoctrine.org
  * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
  * @since       1.0
- * @version     $Revision: 7021 $
+ * @version     $Revision: 7284 $
  * @author      Konsta Vesterinen <kvesteri@cc.hut.fi>
  * @author      Jukka Hassinen <Jukka.Hassinen@BrainAlliance.com>
  * @author      Nicolas Bérard-Nault <nicobn@php.net>
@@ -389,6 +389,8 @@ class Doctrine_Import_Builder extends Doctrine_Builder
         $i = 0;
 
         if (isset($definition['relations']) && is_array($definition['relations']) && ! empty($definition['relations'])) {
+            // canonicalize relation order
+            ksort($definition['relations']);
             foreach ($definition['relations'] as $name => $relation) {
                 $class = isset($relation['class']) ? $relation['class']:$name;
                 $alias = (isset($relation['alias']) && $relation['alias'] !== $this->_classPrefix . $relation['class']) ? ' as ' . $relation['alias'] : '';
@@ -646,7 +648,7 @@ class Doctrine_Import_Builder extends Doctrine_Builder
         $ret[] = '@package    ' . $this->_phpDocPackage;
         $ret[] = '@subpackage ' . $this->_phpDocSubpackage;
         $ret[] = '@author     ' . $this->_phpDocName . ' <' . $this->_phpDocEmail . '>';
-        $ret[] = '@version    SVN: $Id: Builder.php 7021 2010-01-12 20:39:49Z lsmith $';
+        $ret[] = '@version    SVN: $Id: Builder.php 7284 2010-03-02 01:19:42Z jwage $';
 
         $ret = ' * ' . implode(PHP_EOL . ' * ', $ret);
         $ret = ' ' . trim($ret);
@@ -804,7 +806,7 @@ class Doctrine_Import_Builder extends Doctrine_Builder
             }
 
             $useOptions = ( ! empty($options) && isset($options['useOptions']) && $options['useOptions'] == true) 
-                ? '$this->getOptions()' : 'array()';
+                ? '$this->getTable()->getOptions()' : 'array()';
             $class = ( ! empty($options) && isset($options['class'])) ? $options['class'] : $name;
 
             $build .= "    \$this->addListener(new " . $class . "(" . $useOptions . "), '" . $name . "');" . PHP_EOL;
@@ -989,7 +991,7 @@ class Doctrine_Import_Builder extends Doctrine_Builder
             }
 
             $baseClass = $definition;
-            $baseClass['className'] = $this->_baseClassPrefix . $baseClass['className'];
+            $baseClass['className'] = $this->_getBaseClassName($baseClass['className']);
             $baseClass['abstract'] = true;
             $baseClass['override_parent'] = false;
             $baseClass['is_base_class'] = true;
@@ -1004,6 +1006,11 @@ class Doctrine_Import_Builder extends Doctrine_Builder
         } else {
             $this->writeDefinition($definition);
         }
+    }
+
+    protected function _getBaseClassName($className)
+    {
+        return $this->_baseClassPrefix . $className;
     }
 
     public function buildTableClassDefinition($className, $options = array())
@@ -1064,6 +1071,28 @@ class Doctrine_Import_Builder extends Doctrine_Builder
     }
 
     /**
+     * Return the file name of the class to be generated.
+     *
+     * @param string $originalClassName
+     * @param array $definition
+     * @return string
+     */
+    protected function _getFileName($originalClassName, $definition)
+    {
+        if ($this->_classPrefixFiles) {
+            $fileName = $definition['className'] . $this->_suffix;
+        } else {
+            $fileName = $originalClassName . $this->_suffix;
+        }
+
+        if ($this->_pearStyle) {
+            $fileName = str_replace('_', '/', $fileName);
+        }
+
+        return $fileName;
+    }
+
+    /**
      * writeDefinition
      *
      * @param array $options
@@ -1097,15 +1126,7 @@ class Doctrine_Import_Builder extends Doctrine_Builder
             $definitionCode = str_replace("'refClass' => '", "'refClass' => '$prefix", $definitionCode);
         }
 
-        if ($this->_classPrefixFiles) { 
-            $fileName = $definition['className'] . $this->_suffix; 
-        } else { 
-            $fileName = $originalClassName . $this->_suffix; 
-        }
-
-        if ($this->_pearStyle) {
-            $fileName = str_replace('_', '/', $fileName);
-        }
+        $fileName = $this->_getFileName($originalClassName, $definition);
 
         $packagesPath = $this->_packagesPath ? $this->_packagesPath:$this->_path;
 
