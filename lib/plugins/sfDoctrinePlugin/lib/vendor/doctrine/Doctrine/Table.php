@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: Table.php 6799 2009-11-24 19:24:33Z jwage $
+ *  $Id: Table.php 7363 2010-03-15 18:18:41Z jwage $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -28,7 +28,7 @@
  * @package     Doctrine
  * @subpackage  Table
  * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
- * @version     $Revision: 6799 $
+ * @version     $Revision: 7363 $
  * @link        www.phpdoctrine.org
  * @since       1.0
  * @method mixed findBy*(mixed $value) magic finders; @see __call()
@@ -244,7 +244,14 @@ class Doctrine_Table extends Doctrine_Configurable implements Countable
         $this->_conn->addTable($this);
         
         $this->_parser = new Doctrine_Relation_Parser($this);
-        
+
+        if ($charset = $this->getAttribute(Doctrine_Core::ATTR_DEFAULT_TABLE_CHARSET)) {
+            $this->_options['charset'] = $charset;
+        }
+        if ($collate = $this->getAttribute(Doctrine_Core::ATTR_DEFAULT_TABLE_COLLATE)) {
+            $this->_options['collate'] = $collate;
+        }
+
         if ($initDefinition) {
             $this->record = $this->initDefinition();
 
@@ -264,13 +271,6 @@ class Doctrine_Table extends Doctrine_Configurable implements Countable
         
         $this->_filters[]  = new Doctrine_Record_Filter_Standard();
         $this->_repository = new Doctrine_Table_Repository($this);
-
-        if ($charset = $this->getAttribute(Doctrine_Core::ATTR_DEFAULT_TABLE_CHARSET)) {
-            $this->_options['charset'] = $charset;
-        }
-        if ($collate = $this->getAttribute(Doctrine_Core::ATTR_DEFAULT_TABLE_COLLATE)) {
-            $this->_options['collate'] = $collate;
-        }
 
         $this->construct();
     }
@@ -1234,6 +1234,19 @@ class Doctrine_Table extends Doctrine_Configurable implements Countable
      */
     public function setColumnOption($columnName, $option, $value)
     {
+        if ($option == 'primary') {
+            if (isset($this->_identifier)) {
+                $this->_identifier = (array) $this->_identifier;
+            }
+
+            if ($value &&  ! in_array($columnName, $this->_identifier)) {
+                $this->_identifier[] = $columnName;
+            } else if (!$value && in_array($columnName, $this->_identifier)) {
+                $key = array_search($columnName, $this->_identifier);
+                unset($this->_identifier[$key]);
+            }
+        }
+
         $columnName = $this->getColumnName($columnName);
         $this->_columns[$columnName][$option] = $value;
     }
