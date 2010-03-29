@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: UnitOfWork.php 7252 2010-03-01 21:05:44Z jwage $
+ *  $Id: UnitOfWork.php 7378 2010-03-15 20:09:45Z jwage $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -33,7 +33,7 @@
  * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
  * @link        www.phpdoctrine.org
  * @since       1.0
- * @version     $Revision: 7252 $
+ * @version     $Revision: 7378 $
  * @author      Konsta Vesterinen <kvesteri@cc.hut.fi>
  * @author      Roman Borschel <roman@code-factory.org>
  */
@@ -381,6 +381,9 @@ class Doctrine_Connection_UnitOfWork extends Doctrine_Connection_Module
      */
     public function saveRelatedLocalKeys(Doctrine_Record $record)
     {
+        $state = $record->state();
+        $record->state($record->exists() ? Doctrine_Record::STATE_LOCKED : Doctrine_Record::STATE_TLOCKED);
+
         foreach ($record->getReferences() as $k => $v) {
             $rel = $record->getTable()->getRelation($k);
             
@@ -409,6 +412,7 @@ class Doctrine_Connection_UnitOfWork extends Doctrine_Connection_Module
                 }
             }
         }
+        $record->state($state);
     }
 
     /**
@@ -439,8 +443,8 @@ class Doctrine_Connection_UnitOfWork extends Doctrine_Connection_Module
                 $assocTable = $rel->getAssociationTable();
                 foreach ($v->getDeleteDiff() as $r) {
                     $query = 'DELETE FROM ' . $assocTable->getTableName()
-                           . ' WHERE ' . $rel->getForeign() . ' = ?'
-                           . ' AND ' . $rel->getLocal() . ' = ?';
+                           . ' WHERE ' . $rel->getForeignRefColumnName() . ' = ?'
+                           . ' AND ' . $rel->getLocalRefColumnName() . ' = ?';
 
                     $this->conn->execute($query, array($r->getIncremented(), $record->getIncremented()));
                 }
@@ -924,7 +928,7 @@ class Doctrine_Connection_UnitOfWork extends Doctrine_Connection_Module
             if ($record->$identifier == null) { 
                 if (($driver = strtolower($this->conn->getDriverName())) == 'pgsql') {
                     $seq = $table->getTableName() . '_' . $identifier;
-                } elseif ($driver == 'oracle') {
+                } elseif ($driver == 'oracle' || $driver == 'mssql') {
                     $seq = $table->getTableName();
                 }
     

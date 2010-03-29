@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: Record.php 7275 2010-03-02 00:03:23Z jwage $
+ *  $Id: Record.php 7387 2010-03-15 21:48:49Z jwage $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -29,7 +29,7 @@
  * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
  * @link        www.phpdoctrine.org
  * @since       1.0
- * @version     $Revision: 7275 $
+ * @version     $Revision: 7387 $
  */
 abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Countable, IteratorAggregate, Serializable
 {
@@ -1064,21 +1064,23 @@ abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Count
      */
     public function relatedExists($name)
     {
-        $newReference = false;
-        if ( ! $this->hasReference($name)) {
-            $newReference = true;
+        if ($this->hasReference($name) && $this->_references[$name] !== self::$_null) {
+            return true;
         }
 
         $reference = $this->$name;
-        if ( ! $reference instanceof Doctrine_Record) {
+        if ($reference instanceof Doctrine_Record) {
+            $exists = $reference->exists();
+        } elseif ($reference instanceof Doctrine_Collection) {
             throw new Doctrine_Record_Exception(
                 'You can only call relatedExists() on a relationship that '.
                 'returns an instance of Doctrine_Record'
             );
+        } else {
+            $exists = false;
         }
-        $exists = $reference->exists();
 
-        if ($newReference) {
+        if (!$exists) {
             $this->clearRelated($name);
         }
 
@@ -1148,14 +1150,16 @@ abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Count
 
             $data = empty($data) ? $this->getTable()->find($id, Doctrine_Core::HYDRATE_ARRAY) : $data;
             
-            foreach ($data as $field => $value) {
-                if ( ! array_key_exists($field, $this->_data) || $this->_data[$field] === self::$_null) {
-                   $this->_data[$field] = $value;
-               }
+            if (is_array($data)) {
+                foreach ($data as $field => $value) {
+                    if ( ! array_key_exists($field, $this->_data) || $this->_data[$field] === self::$_null) {
+                       $this->_data[$field] = $value;
+                   }
+                }
             }
             
             if ($this->isModified()) {
-               $this->_state = Doctrine_Record::STATE_DIRTY;
+                $this->_state = Doctrine_Record::STATE_DIRTY;
             } else if (!$this->isInProxyState()) {
                 $this->_state = Doctrine_Record::STATE_CLEAN;
             }
@@ -1237,7 +1241,7 @@ abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Count
     public function getAccessors()
     {
         $componentName = $this->_table->getComponentName();
-        return self::$_customAccessors[$componentName];
+        return isset(self::$_customAccessors[$componentName]) ? self::$_customAccessors[$componentName] : array();
     }
 
     /**
@@ -1521,9 +1525,15 @@ abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Count
         } else if (in_array($type, array('decimal', 'float')) && is_numeric($old) && is_numeric($new)) {
             return $old * 100 != $new * 100;
         } else if (in_array($type, array('integer', 'int')) && is_numeric($old) && is_numeric($new)) {
-            return (int) $old !== (int) $new;
+            return $old !== $new;
         } else if ($type == 'timestamp' || $type == 'date') {
-            return strtotime($old) !== strtotime($new);
+            $oldStrToTime = strtotime($old);
+            $newStrToTime = strtotime($new);
+            if ($oldStrToTime && $newStrToTime) {
+                return $oldStrToTime !== $newStrToTime;
+            } else {
+                return $old !== $new;
+            }
         } else {
             return $old !== $new;
         }
@@ -1878,7 +1888,7 @@ abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Count
                 $value = null;
             }
 
-            $columnValue = $this->get($column);
+            $columnValue = $this->get($column, false);
 
             if ($columnValue instanceof Doctrine_Record) {
                 $a[$column] = $columnValue->getIncremented();
@@ -2024,8 +2034,8 @@ abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Count
         // Eliminate relationships missing in the $array
         foreach ($this->_references as $name => $relation) {
 	        $rel = $this->getTable()->getRelation($name);
-	
-			if ( ! isset($array[$name]) && ( ! $rel->isOneToOne() || ! isset($array[$rel->getLocalFieldName()]))) {
+
+            if ( ! $rel->isRefClass() && ! isset($array[$name]) && ( ! $rel->isOneToOne() || ! isset($array[$rel->getLocalFieldName()]))) {
                 unset($this->$name);
             }
         }
