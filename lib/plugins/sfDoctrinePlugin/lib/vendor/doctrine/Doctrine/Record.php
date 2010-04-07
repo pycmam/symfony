@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: Record.php 7387 2010-03-15 21:48:49Z jwage $
+ *  $Id: Record.php 7496 2010-03-30 20:20:37Z jwage $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -16,7 +16,7 @@
  *
  * This software consists of voluntary contributions made by many individuals
  * and is licensed under the LGPL. For more information, see
- * <http://www.phpdoctrine.org>.
+ * <http://www.doctrine-project.org>.
  */
 
 /**
@@ -27,9 +27,9 @@
  * @subpackage  Record
  * @author      Konsta Vesterinen <kvesteri@cc.hut.fi>
  * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
- * @link        www.phpdoctrine.org
+ * @link        www.doctrine-project.org
  * @since       1.0
- * @version     $Revision: 7387 $
+ * @version     $Revision: 7496 $
  */
 abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Countable, IteratorAggregate, Serializable
 {
@@ -1148,11 +1148,12 @@ abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Count
                 return false;
             }
 
-            $data = empty($data) ? $this->getTable()->find($id, Doctrine_Core::HYDRATE_ARRAY) : $data;
+            $table = $this->getTable();
+            $data = empty($data) ? $table->find($id, Doctrine_Core::HYDRATE_ARRAY) : $data;
             
             if (is_array($data)) {
                 foreach ($data as $field => $value) {
-                    if ( ! array_key_exists($field, $this->_data) || $this->_data[$field] === self::$_null) {
+                    if ($table->hasField($field) && ( ! array_key_exists($field, $this->_data) || $this->_data[$field] === self::$_null)) {
                        $this->_data[$field] = $value;
                    }
                 }
@@ -1361,9 +1362,13 @@ abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Count
         }
         
         try {
-            if ( ! isset($this->_references[$fieldName]) && $load) {
-                $rel = $this->_table->getRelation($fieldName);
-                $this->_references[$fieldName] = $rel->fetchRelatedFor($this);
+            if ( ! isset($this->_references[$fieldName])) {
+                if ($load) {
+                    $rel = $this->_table->getRelation($fieldName);
+                    $this->_references[$fieldName] = $rel->fetchRelatedFor($this);
+                } else {
+                    $this->_references[$fieldName] = null;
+                }
             }
 
             if ($this->_references[$fieldName] === self::$_null) {
@@ -1606,7 +1611,7 @@ abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Count
     }
 
     /**
-     * test whether a field (column, mapped value, related component) is accessible by @see get()
+     * test whether a field (column, mapped value, related component, accessor) is accessible by @see get()
      *
      * @param string $fieldName
      * @return boolean
