@@ -82,8 +82,12 @@ class Doctrine_Template_SoftDelete extends Doctrine_Template
             $conn = $this->_table->getConnection();
         }
         $this->_listener->hardDelete(true);
-        $result = $this->_invoker->delete();
-        $this->_listener->hardDelete(false);
+        try {
+            $result = $this->_invoker->delete();
+        } catch (Exception $e) {
+            $this->_listener->hardDelete(false);
+            throw $e;
+        }
         return $result;
     }
 }
