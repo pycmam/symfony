@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: Mysql.php 6624 2009-11-03 01:21:08Z jwage $
+ *  $Id: Mysql.php 7544 2010-04-07 11:57:41Z kriswallsmith $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -16,7 +16,7 @@
  *
  * This software consists of voluntary contributions made by many individuals
  * and is licensed under the LGPL. For more information, see
- * <http://www.phpdoctrine.org>.
+ * <http://www.doctrine-project.org>.
  */
 
 /**
@@ -27,9 +27,9 @@
  * @author      Konsta Vesterinen <kvesteri@cc.hut.fi>
  * @author      Lukas Smith <smith@pooteeweet.org> (PEAR MDB2 library)
  * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
- * @link        www.phpdoctrine.org
+ * @link        www.doctrine-project.org
  * @since       1.0
- * @version     $Revision: 6624 $
+ * @version     $Revision: 7544 $
  */
 class Doctrine_Export_Mysql extends Doctrine_Export
 {
@@ -133,7 +133,7 @@ class Doctrine_Export_Mysql extends Doctrine_Export
                     foreach ($options['indexes'] as $definition) {
                         if (is_string($definition['fields'])) {
                             // Check if index already exists on the column                            
-                            $found = ($local == $definition['fields']);                        
+                            $found = $found || ($local == $definition['fields']);                    
                         } else if (in_array($local, $definition['fields']) && count($definition['fields']) === 1) {
                             // Index already exists on the column
                             $found = true;
@@ -719,6 +719,30 @@ class Doctrine_Export_Mysql extends Doctrine_Export
             $declFields[] = $fieldString;
         }
         return implode(', ', $declFields);
+    }
+
+    /**
+     * Returns a character set declaration.
+     *
+     * @param string $charset A character set
+     *
+     * @return string A character set declaration
+     */
+    public function getCharsetFieldDeclaration($charset)
+    {
+        return $this->conn->dataDict->getCharsetFieldDeclaration($charset);
+    }
+
+    /**
+     * Returns a collation declaration.
+     *
+     * @param string $collation A collation
+     *
+     * @return string A collation declaration
+     */
+    public function getCollationFieldDeclaration($collation)
+    {
+        return $this->conn->dataDict->getCollationFieldDeclaration($collation);
     }
 
     /**

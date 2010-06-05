@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: Oracle.php 6946 2009-12-14 20:06:51Z adrive $
+ *  $Id: Oracle.php 7490 2010-03-29 19:53:27Z jwage $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -16,7 +16,7 @@
  *
  * This software consists of voluntary contributions made by many individuals
  * and is licensed under the LGPL. For more information, see
- * <http://www.phpdoctrine.org>.
+ * <http://www.doctrine-project.org>.
  */
 
 /**
@@ -27,9 +27,9 @@
  * @author      Konsta Vesterinen <kvesteri@cc.hut.fi>
  * @author      Lukas Smith <smith@pooteeweet.org> (PEAR MDB2 library)
  * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
- * @link        www.phpdoctrine.org
+ * @link        www.doctrine-project.org
  * @since       1.0
- * @version     $Revision: 6946 $
+ * @version     $Revision: 7490 $
  */
 class Doctrine_Export_Oracle extends Doctrine_Export
 {
@@ -498,7 +498,7 @@ END;';
         if ( ! empty($changes['add']) && is_array($changes['add'])) {
             $fields = array();
             foreach ($changes['add'] as $fieldName => $field) {
-                $fields[] = $this->conn->getDeclaration($fieldName, $field);
+                $fields[] = $this->getDeclaration($fieldName, $field); 
             }
             $result = $this->conn->exec('ALTER TABLE ' . $name . ' ADD (' . implode(', ', $fields) . ')');
         }
@@ -506,7 +506,7 @@ END;';
         if ( ! empty($changes['change']) && is_array($changes['change'])) {
             $fields = array();
             foreach ($changes['change'] as $fieldName => $field) {
-                $fields[] = $fieldName. ' ' . $this->conn->getDeclaration('', $field['definition']);
+                $fields[] = $fieldName. ' ' . $this->getDeclaration('', $field['definition']);
             }
             $result = $this->conn->exec('ALTER TABLE ' . $name . ' MODIFY (' . implode(', ', $fields) . ')');
         }

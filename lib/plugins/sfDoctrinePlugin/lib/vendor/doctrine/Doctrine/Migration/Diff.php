@@ -16,7 +16,7 @@
  *
  * This software consists of voluntary contributions made by many individuals
  * and is licensed under the LGPL. For more information, see
- * <http://www.phpdoctrine.org>.
+ * <http://www.doctrine-project.org>.
  */
 
 /**
@@ -26,7 +26,7 @@
  * @package     Doctrine
  * @subpackage  Migration
  * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
- * @link        www.phpdoctrine.org
+ * @link        www.doctrine-project.org
  * @since       1.0
  * @version     $Revision: 1080 $
  * @author      Jonathan H. Wage <jonwage@gmail.com>
@@ -130,6 +130,27 @@ class Doctrine_Migration_Diff
     }
 
     /**
+     * Initialize some Doctrine models at a given path.
+     *
+     * @param string $path 
+     * @return array $models
+     */
+    protected function _initializeModels($path)
+    {
+        $manager = Doctrine_Manager::getInstance();
+        $modelLoading = $manager->getAttribute(Doctrine_Core::ATTR_MODEL_LOADING);
+        if ($modelLoading === Doctrine_Core::MODEL_LOADING_PEAR) {
+            $orig = Doctrine_Core::getModelsDirectory();
+            Doctrine_Core::setModelsDirectory($path);
+            $models = Doctrine_Core::initializeModels(Doctrine_Core::loadModels($path));
+            Doctrine_Core::setModelsDirectory($orig);
+        } else {
+            $models = Doctrine_Core::initializeModels(Doctrine_Core::loadModels($path));
+        }
+        return $models;
+    }
+
+    /**
      * Generate a diff between the from and to schema information
      *
      * @param  string $from     Path to set of models to migrate from
@@ -139,8 +160,8 @@ class Doctrine_Migration_Diff
     protected function _diff($from, $to)
     {
         // Load the from and to models
-        $fromModels = Doctrine_Core::initializeModels(Doctrine_Core::loadModels($from));
-        $toModels = Doctrine_Core::initializeModels(Doctrine_Core::loadModels($to));
+        $fromModels = $this->_initializeModels($from);
+        $toModels = $this->_initializeModels($to);
 
         // Build schema information for the models
         $fromInfo = $this->_buildModelInformation($fromModels);

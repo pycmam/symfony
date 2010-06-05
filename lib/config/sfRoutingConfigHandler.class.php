@@ -87,7 +87,9 @@ class sfRoutingConfigHandler extends sfYamlConfigHandler
       )
       {
         $options = isset($params['options']) ? $params['options'] : array();
-        $options['name'] = $name;
+        if (empty($options['name'])) {
+            $options['name'] = $name;
+        }
         $options['requirements'] = isset($params['requirements']) ? $params['requirements'] : array();
 
         $routes[$name] = array(isset($params['class']) ? $params['class'] : 'sfRouteCollection', array($options));

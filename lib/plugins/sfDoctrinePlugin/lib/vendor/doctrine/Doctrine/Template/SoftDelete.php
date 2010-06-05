@@ -16,7 +16,7 @@
  *
  * This software consists of voluntary contributions made by many individuals
  * and is licensed under the LGPL. For more information, see
- * <http://www.phpdoctrine.org>.
+ * <http://www.doctrine-project.org>.
  */
 
 /**
@@ -25,7 +25,7 @@
  * @package     Doctrine
  * @subpackage  Template
  * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
- * @link        www.phpdoctrine.org
+ * @link        www.doctrine-project.org
  * @since       1.0
  * @version     $Revision$
  * @author      Konsta Vesterinen <kvesteri@cc.hut.fi>
@@ -82,8 +82,12 @@ class Doctrine_Template_SoftDelete extends Doctrine_Template
             $conn = $this->_table->getConnection();
         }
         $this->_listener->hardDelete(true);
-        $result = $this->_invoker->delete();
-        $this->_listener->hardDelete(false);
+        try {
+            $result = $this->_invoker->delete();
+        } catch (Exception $e) {
+            $this->_listener->hardDelete(false);
+            throw $e;
+        }
         return $result;
     }
 }

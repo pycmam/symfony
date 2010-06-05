@@ -18,7 +18,7 @@
  * @subpackage request
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
  * @author     Sean Kerr <sean@code-box.org>
- * @version    SVN: $Id: sfWebRequest.class.php 24265 2009-11-23 11:55:33Z Kris.Wallsmith $
+ * @version    SVN: $Id: sfWebRequest.class.php 29285 2010-04-28 06:33:02Z fabien $
  */
 class sfWebRequest extends sfRequest
 {
@@ -248,13 +248,14 @@ class sfWebRequest extends sfRequest
     {
       if (isset($pathArray['REQUEST_URI']))
       {
+        $qs = isset($pathArray['QUERY_STRING']) ? $pathArray['QUERY_STRING'] : '';
         $script_name = $this->getScriptName();
         $uri_prefix = $this->isAbsUri() ? $this->getUriPrefix() : '';
         $pathInfo = preg_replace('/^'.preg_quote($uri_prefix, '/').'/','',$pathArray['REQUEST_URI']);
         $pathInfo = preg_replace('/^'.preg_quote($script_name, '/').'/', '', $pathInfo);
         $prefix_name = preg_replace('#/[^/]+$#', '', $script_name);
         $pathInfo = preg_replace('/^'.preg_quote($prefix_name, '/').'/', '', $pathInfo);
-        $pathInfo = preg_replace('/\??'.preg_quote($pathArray['QUERY_STRING'], '/').'$/', '', $pathInfo);
+        $pathInfo = preg_replace('/\??'.preg_quote($qs, '/').'$/', '', $pathInfo);
       }
     }
     else
@@ -599,15 +600,18 @@ class sfWebRequest extends sfRequest
       // Cut off any q-value that might come after a semi-colon
       if ($pos = strpos($value, ';'))
       {
-        $q     = (float) trim(substr($value, $pos + 3));
-        $value = trim(substr($value, 0, $pos));
+        $q     = (float) trim(substr($value, strpos($value, '=') + 1));
+        $value = substr($value, 0, $pos);
       }
       else
       {
         $q = 1;
       }
 
-      $values[$value] = $q;
+      if (0 < $q)
+      {
+        $values[trim($value)] = $q;
+      }
     }
 
     arsort($values);

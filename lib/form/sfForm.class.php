@@ -23,7 +23,7 @@
  * @package    symfony
  * @subpackage form
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfForm.class.php 27954 2010-02-12 16:12:44Z Kris.Wallsmith $
+ * @version    SVN: $Id: sfForm.class.php 29678 2010-05-30 14:38:42Z Kris.Wallsmith $
  */
 class sfForm implements ArrayAccess, Iterator, Countable
 {
@@ -336,13 +336,13 @@ class sfForm implements ArrayAccess, Iterator, Countable
   /**
    * Returns the array name under which user data can retrieved.
    *
-   * If the user data is not stored under an array, it returns null.
+   * If the user data is not stored under an array, it returns false.
    *
-   * @return string The name
+   * @return string|boolean The name or false if the name format is not an array format
    */
   public function getName()
   {
-    if ('%s' == $nameFormat = $this->widgetSchema->getNameFormat())
+    if ('[%s]' != substr($nameFormat = $this->widgetSchema->getNameFormat(), -4))
     {
       return false;
     }
@@ -496,7 +496,7 @@ class sfForm implements ArrayAccess, Iterator, Countable
     $form = clone $form;
     unset($form[self::$CSRFFieldName]);
 
-    $this->defaults = array_merge($this->defaults, $form->getDefaults());
+    $this->defaults = $form->getDefaults() + $this->defaults;
 
     foreach ($form->getWidgetSchema()->getPositions() as $field)
     {
@@ -508,8 +508,8 @@ class sfForm implements ArrayAccess, Iterator, Countable
       $this->validatorSchema[$field] = $validator;
     }
 
-    $this->getWidgetSchema()->setLabels(array_merge($this->getWidgetSchema()->getLabels(), $form->getWidgetSchema()->getLabels()));
-    $this->getWidgetSchema()->setHelps(array_merge($this->getWidgetSchema()->getHelps(), $form->getWidgetSchema()->getHelps()));
+    $this->getWidgetSchema()->setLabels($form->getWidgetSchema()->getLabels() + $this->getWidgetSchema()->getLabels());
+    $this->getWidgetSchema()->setHelps($form->getWidgetSchema()->getHelps() + $this->getWidgetSchema()->getHelps());
 
     $this->mergePreValidator($form->getValidatorSchema()->getPreValidator());
     $this->mergePostValidator($form->getValidatorSchema()->getPostValidator());
@@ -584,8 +584,8 @@ class sfForm implements ArrayAccess, Iterator, Countable
   /**
    * Set a validator for the given field name.
    *
-   * @param string      $name      The field name
-   * @param sfValidator $validator The validator
+   * @param string          $name      The field name
+   * @param sfValidatorBase $validator The validator
    *
    * @return sfForm The current form instance
    */
@@ -603,7 +603,7 @@ class sfForm implements ArrayAccess, Iterator, Countable
    *
    * @param  string      $name      The field name
    *
-   * @return sfValidator $validator The validator
+   * @return sfValidatorBase $validator The validator
    */
   public function getValidator($name)
   {
@@ -1145,7 +1145,7 @@ class sfForm implements ArrayAccess, Iterator, Countable
   {
     if (null === $this->formFieldSchema)
     {
-      $values = $this->isBound ? $this->taintedValues : array_merge($this->widgetSchema->getDefaults(), $this->defaults);
+      $values = $this->isBound ? $this->taintedValues : $this->defaults + $this->widgetSchema->getDefaults();
 
       $this->formFieldSchema = new sfFormFieldSchema($this->widgetSchema, null, null, $values, $this->errorSchema);
     }
